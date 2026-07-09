@@ -1,11 +1,11 @@
 
 
 // ============================================================
-// authRepository.js
+// repository.js
 // Capa de acceso a datos para autenticación.
 // Responsabilidad única: ejecutar queries SQL contra la tabla "users".
-// No contiene lógica de negocio (eso vive en authService.js) ni
-// maneja req/res (eso vive en authController.js).
+// No contiene lógica de negocio (eso vive en service.js) ni
+// maneja req/res (eso vive en controller.js).
 // ============================================================
 
 const pool = require('../config/db'); // Conexión a Supabase/PostgreSQL ya configurada.

@@ -1,7 +1,7 @@
 
 
 // ============================================================
-// authService.js
+// service.js
 // Lógica de negocio del login (HU-00).
 // Esta capa NO conoce req/res (responsabilidad del controller) ni
 // ejecuta queries SQL directas (responsabilidad del repository).
