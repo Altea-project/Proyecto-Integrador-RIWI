@@ -51,6 +51,7 @@ CREATE TABLE users (
     status_changed_at     TIMESTAMP,                        -- sugerido: auditoría RN-10
     created_at            TIMESTAMP NOT NULL DEFAULT now(),
     updated_at            TIMESTAMP NOT NULL DEFAULT now()  -- sugerido
+    must_change_password  BOOLEAN NOT NULL DEFAULT true  -- para forzar cambio de contraseña al primer login
 );
 
 CREATE INDEX idx_users_role_id ON users(role_id);
