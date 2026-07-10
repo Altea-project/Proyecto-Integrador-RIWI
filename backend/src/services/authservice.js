@@ -10,7 +10,7 @@
 // ============================================================
 
 const bcrypt = require('bcrypt');
-const { findUserByEmail } = require('../repositories/authrepository');
+const { findUserByEmail } = require('../repositories/authRepository');
 const { generateToken } = require('../utils/jwt');
 
 /**
