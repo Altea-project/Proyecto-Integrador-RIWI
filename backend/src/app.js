@@ -2,7 +2,7 @@
 
 // ============================================================
 // app.js
-// Configura la aplicación Express: middlewares globales y rutas.
+// este archivo configura la aplicación Express: middlewares globales y rutas.
 // NO arranca el servidor (eso lo hace server.js con app.listen).
 // Separar esto permite, por ejemplo, testear la app sin levantar
 // un puerto real.
@@ -11,7 +11,7 @@
 const express = require('express');
 const cors = require('cors');
 
-const authRoutes = require('./routes/routes');
+const authRoutes = require('./routes/authroutes');
 
 const app = express();
 

@@ -10,7 +10,7 @@
 // ============================================================
 
 const bcrypt = require('bcrypt');
-const { findUserByEmail } = require('../repositories/repository');
+const { findUserByEmail } = require('../repositories/authRepository');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -69,6 +69,7 @@ async function login(email, password) {
         name: user.name,
         email: user.email,
         roleId: user.role_id,
+        roleName: user.role_name,
         },
     mustChangePassword: user.must_change_password,
     };

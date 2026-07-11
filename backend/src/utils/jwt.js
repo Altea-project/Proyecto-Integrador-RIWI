@@ -40,6 +40,7 @@ function generateToken(user) {
     const payload = {
         id: user.id,
         roleId: user.role_id,
+        roleName: user.role_name,
     };
 
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });

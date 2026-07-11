@@ -1,11 +1,11 @@
 
 
 // ============================================================
-// repository.js
-// Capa de acceso a datos para autenticación.
+// authrepository.js
+// este archivo contiene la Capa de acceso a datos para autenticación.
 // Responsabilidad única: ejecutar queries SQL contra la tabla "users".
-// No contiene lógica de negocio (eso vive en service.js) ni
-// maneja req/res (eso vive en controller.js).
+// No contiene lógica de negocio (eso vive en authservice.js) ni
+// maneja req/res (eso vive en authcontroller.js).
 // ============================================================
 
 const pool = require('../config/db'); // Conexión a Supabase/PostgreSQL ya configurada.
@@ -24,10 +24,15 @@ const pool = require('../config/db'); // Conexión a Supabase/PostgreSQL ya conf
  *   si no existe ningún usuario con ese correo.
  */
 async function findUserByEmail(email) {
+// JOIN con roles para traer el nombre del rol (ej. "admin"), no solo su ID.
+// Esto permite que el JWT lleve roleName y la autorización se haga por
+// nombre en vez de por ID hardcodeado (más robusto ante reordenamientos
+// del seed o diferencias entre entornos).
     const { rows } = await pool.query(
-        `SELECT id, name, email, password_hash, role_id, must_change_password
-        FROM users
-        WHERE email = $1`,
+        `SELECT u.id, u.name, u.email, u.password_hash, u.role_id, u.must_change_password, r.name as role_name
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.email = $1`,
         [email]
     );
 
