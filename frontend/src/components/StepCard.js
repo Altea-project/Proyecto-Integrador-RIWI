@@ -1,4 +1,6 @@
+// Tarjeta que describe un paso con ícono, título, descripción y lista de verificación
 export function StepCard({ number, icon, title, description, checklist }) {
+  // Convierte cada elemento de la lista en un <li> con palomita de verificación
   const checklistItems = checklist
     .map(
       (item) => `

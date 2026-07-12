@@ -1,3 +1,4 @@
+// Componente de enlace con estilo de botón, admite variante primary y outline
 export function Button({
   text,
   variant = "primary",
