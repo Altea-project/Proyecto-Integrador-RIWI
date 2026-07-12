@@ -1,4 +1,29 @@
+# ─── Dependencias ──────────────────────────────────────────
 node_modules/
+dist/
+build/
+.vite/
+.cache/
+
+# ─── Variables de entorno ──────────────────────────────────
 .env
+.env.*
+
+# ─── Archivos de registro ──────────────────────────────────
 *.log
+
+# ─── Archivos del sistema operativo ────────────────────────
 .DS_Store
+Thumbs.db
+
+# ─── Herramientas de IA locales ────────────────────────────
+.agents/
+skill-lock.json
+.opencode/
+.mcp/
+.mcp-cache/
+.cursor/
+.claude/
+.openrouter/
+.ai/
+.codex/

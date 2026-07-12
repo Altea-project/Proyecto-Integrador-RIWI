@@ -1,3 +1,4 @@
+// Tarjeta de testimonio con valoración de estrellas, cita y datos del usuario
 export function TestimonialCard({
   quote,
   initials,
@@ -6,6 +7,7 @@ export function TestimonialCard({
   userType,
   rating = 5,
 }) {
+  // Genera estrellas rellenas o vacías según la puntuación
   const stars = Array.from({ length: 5 })
     .map(
       (_, i) =>
@@ -13,6 +15,7 @@ export function TestimonialCard({
     )
     .join("");
 
+  // El reclutador se muestra con color informativo; el resto con el color de marca
   const badgeStyles =
     userType === "RECLUTADOR"
       ? "bg-state-info/15 text-state-info"

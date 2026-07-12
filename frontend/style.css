@@ -22,6 +22,7 @@
   --font-body: "Inter", sans-serif;
 }
 
+/* Estilos base: tipografía global y desplazamiento suave */
 @layer base {
   html {
     scroll-behavior: smooth;
