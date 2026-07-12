@@ -1,4 +1,5 @@
-// Tarjeta de testimonio con valoración de estrellas, cita y datos del usuario
+import iconStar from "../../assets/icon/iconStar.svg";
+
 export function TestimonialCard({
   quote,
   initials,
@@ -11,7 +12,7 @@ export function TestimonialCard({
   const stars = Array.from({ length: 5 })
     .map(
       (_, i) =>
-        `<span class="${i < rating ? "text-state-warning" : "text-border-default"}" aria-hidden="true">★</span>`,
+        `<img src="${iconStar}" alt="" class="h-4 w-4 ${i < rating ? "opacity-100" : "opacity-25"}" />`,
     )
     .join("");
 
