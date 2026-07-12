@@ -1,5 +1,3 @@
-
-
 // ============================================================
 // app.js
 // este archivo configura la aplicación Express: middlewares globales y rutas.
@@ -12,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./routes/authroutes');
+const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
 
 const app = express();
 
@@ -23,6 +22,7 @@ app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.bo
 // Todo lo que venga de authRoutes queda bajo el prefijo /api
 // (ej: POST /login en authRoutes.js -> queda POST /api/login)
 app.use('/api', authRoutes);
+app.use('/api', passwordRoutes); // PATCH /api/change-password
 
 // Ruta de salud simple, útil para confirmar que el servidor responde
 // antes de probar rutas más complejas.
@@ -32,8 +32,7 @@ app.get('/', (req, res) => {
 
 // Manejador de errores centralizado (versión mínima por ahora).
 // Cualquier next(error) de un controller termina aquí.
-// TODO: reemplazar por el manejador de errores centralizado definitivo
-// cuando lo construyan como pieza compartida (ver conversación anterior).
+// IMPORTANTE: va SIEMPRE al final, después de todas las rutas.
 app.use((error, req, res, next) => {
   // express.json() lanza un SyntaxError cuando el body no es JSON válido
   // (ej: falta un valor, coma de más, comillas sin cerrar). Es un error
