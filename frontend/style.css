@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
-/* Tokens de diseño: paleta oscura, colores de marca y fuentes del sistema */
-@theme {
+@theme{
   --color-bg-primary: #0b0e14;
   --color-bg-secondary: #161b26;
 
