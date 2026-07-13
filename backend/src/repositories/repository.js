@@ -70,6 +70,7 @@ async function createUser(user) {
     return rows[0];
 }
 
+
 module.exports = {
     findUserByEmail,
     findUserByDocument,
