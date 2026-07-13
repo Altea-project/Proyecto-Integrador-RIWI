@@ -41,4 +41,70 @@ async function findUserByEmail(email) {
     return rows[0];
 }
 
-module.exports = { findUserByEmail };
+/**
+ * Busca un usuario por su número de documento.
+ * Se usa en el registro (HU-01) para validar que no exista ya un
+ * usuario con ese documento antes de crear uno nuevo.
+ *
+ * @param {string} document - Documento a buscar.
+ * @returns {Promise<Object|undefined>} { id } si existe, undefined si no.
+ */
+async function findUserByDocument(document) {
+    const { rows } = await pool.query(
+        `SELECT id FROM users WHERE document = $1`,
+        [document]
+    );
+    return rows[0];
+}
+
+/**
+ * Busca un rol por su nombre (ej. "admin", "instructor", "coder", "recruiter").
+ * Se usa en el registro (HU-01) para validar que el rol enviado en el
+ * body exista y para obtener su id antes de crear el usuario.
+ *
+ * @param {string} name - Nombre del rol.
+ * @returns {Promise<Object|undefined>} { id, name } si existe, undefined si no.
+ */
+async function findRoleByName(name) {
+    const { rows } = await pool.query(
+        `SELECT id, name FROM roles WHERE name = $1`,
+        [name]
+    );
+    return rows[0];
+}
+
+/**
+ * Inserta un nuevo usuario en la tabla "users".
+ * must_change_password siempre se crea en true, ya que el usuario
+ * recibe una contraseña temporal generada por el service y debe
+ * cambiarla en su primer login (ver HU-01, T4).
+ *
+ * @param {Object} user - Datos del usuario a crear.
+ * @param {string} user.name
+ * @param {string} user.email
+ * @param {string} user.passwordHash - Hash bcrypt de la contraseña temporal.
+ * @param {string} [user.phone]
+ * @param {string} [user.document]
+ * @param {string} [user.company]
+ * @param {number} user.roleId
+ * @returns {Promise<Object>} El usuario recién creado (sin password_hash).
+ */
+async function createUser(user) {
+    const { rows } = await pool.query(
+        `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+        RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at`,
+        [
+            user.name,
+            user.email,
+            user.passwordHash,
+            user.phone || null,
+            user.document || null,
+            user.company || null,
+            user.roleId,
+        ]
+    );
+    return rows[0];
+}
+
+module.exports = { findUserByEmail, findUserByDocument, findRoleByName, createUser };

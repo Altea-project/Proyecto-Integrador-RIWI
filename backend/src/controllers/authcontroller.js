@@ -62,4 +62,54 @@ async function login(req, res, next) {
     }
 }
 
-module.exports = { login };
+/**
+ * POST /register
+ *
+ * Ruta protegida: solo un admin autenticado puede registrar usuarios
+ * nuevos (ver authroutes.js: verifyToken + requireRole('admin')).
+ *
+ * Body esperado: { name, email, role, phone?, document?, company? }
+ *
+ * Respuestas posibles:
+ * - 201: usuario creado -> { success: true, data: { user, tempPassword } }
+ * - 400: faltan campos obligatorios, o el rol no existe -> { success: false, error }
+ * - 409: el email o el document ya están registrados -> { success: false, error }
+ * - 500: error inesperado -> delega al manejador de errores centralizado
+ */
+async function registerUser(req, res, next) {
+    try {
+        const { name, email, role, phone, document, company } = req.body;
+
+        // Validación de forma: campos mínimos obligatorios para crear un
+        // usuario. El resto de reglas (rol válido, email/document únicos)
+        // son de negocio y viven en el service.
+        if (!name || !email || !role) {
+            return res.status(400).json({
+                success: false,
+                error: 'name, email y role son obligatorios',
+            });
+        }
+
+        const result = await authService.registerUser({ name, email, role, phone, document, company });
+
+        return res.status(201).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        if (error instanceof authService.RoleNotFoundError) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
+
+        if (
+            error instanceof authService.EmailAlreadyExistsError ||
+            error instanceof authService.DocumentAlreadyExistsError
+        ) {
+            return res.status(409).json({ success: false, error: error.message });
+        }
+
+        next(error);
+    }
+}
+
+module.exports = { login, registerUser };

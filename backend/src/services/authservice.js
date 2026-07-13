@@ -10,7 +10,13 @@
 // ============================================================
 
 const bcrypt = require('bcrypt');
-const { findUserByEmail } = require('../repositories/authRepository');
+const crypto = require('crypto'); // usa la librería crypto de node para generar una contraseña temporal aleatoria segura
+const {
+    findUserByEmail,
+    findUserByDocument,
+    findRoleByName,
+    createUser,
+} = require('../repositories/authrepository');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -21,6 +27,95 @@ const { generateToken } = require('../utils/jwt');
  * de 500.
  */
 class InvalidCredentialsError extends Error {}
+
+class RoleNotFoundError extends Error {} // Error de dominio para rol no encontrado (ej. al crear un usuario con un rol inválido).
+class EmailAlreadyExistsError extends Error {} // Error de dominio para email ya registrado (ej. al crear un usuario con un email que ya existe).
+class DocumentAlreadyExistsError extends Error {} // Error de dominio para documento ya registrado (ej. al crear un usuario con un documento que ya existe).
+
+/**
+ * Genera una contraseña temporal aleatoria y legible (evita caracteres
+ * ambiguos como 0/O o l/1) para asignarla a un usuario recién creado
+ * por un admin (HU-01). El usuario deberá cambiarla en su primer login
+ * (ver must_change_password en createUser / login).
+ *
+ * @param {number} [length=10] - Longitud de la contraseña generada.
+ * @returns {string} Contraseña temporal en texto plano.
+ */
+function generateTempPassword(length = 10) {
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = crypto.randomBytes(length);
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += alphabet[bytes[i] % alphabet.length];
+    }
+    return password;
+}
+
+/**
+ * Ejecuta el flujo completo de registro de un usuario nuevo (HU-01).
+ * Solo debe llamarse desde una ruta protegida por verifyToken +
+ * requireRole('admin') (ver authroutes.js).
+ *
+ * CA: valida que el rol exista, que el email no esté registrado y,
+ * si viene document, que tampoco esté registrado. Genera una
+ * contraseña temporal, la hashea, y crea el usuario con
+ * must_change_password = true.
+ *
+ * @param {Object} data
+ * @param {string} data.name
+ * @param {string} data.email
+ * @param {string} data.role - Nombre del rol (ej. "admin", "coder").
+ * @param {string} [data.phone]
+ * @param {string} [data.document]
+ * @param {string} [data.company]
+ * @returns {Promise<Object>} { user, tempPassword } — tempPassword se
+ *   devuelve en texto plano solo esta vez, para que el admin se la
+ *   comparta al nuevo usuario (nunca se guarda en texto plano ni se
+ *   vuelve a exponer después).
+ * @throws {RoleNotFoundError} Si el rol no existe.
+ * @throws {EmailAlreadyExistsError} Si el email ya está registrado.
+ * @throws {DocumentAlreadyExistsError} Si el document ya está registrado.
+ */
+async function registerUser({ name, email, role, phone, document, company }) {
+    const roleRecord = await findRoleByName(role);
+    if (!roleRecord) {
+        throw new RoleNotFoundError(`El rol "${role}" no existe`);
+    }
+
+    const existingByEmail = await findUserByEmail(email);
+    if (existingByEmail) {
+        throw new EmailAlreadyExistsError('Ya existe un usuario registrado con ese correo');
+    }
+
+    if (document) {
+        const existingByDocument = await findUserByDocument(document);
+        if (existingByDocument) {
+            throw new DocumentAlreadyExistsError('Ya existe un usuario registrado con ese documento');
+        }
+    }
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const newUser = await createUser({
+        name, email, passwordHash, phone, document, company, roleId: roleRecord.id,
+    });
+
+    return {
+        user: {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            document: newUser.document,
+            company: newUser.company,
+            roleId: newUser.role_id,
+            roleName: roleRecord.name,
+            mustChangePassword: newUser.must_change_password,
+        },
+        tempPassword,
+    };
+}
 
 /**
  * Ejecuta el flujo completo de login: valida credenciales y arma
@@ -75,4 +170,11 @@ async function login(email, password) {
     };
 }
 
-module.exports = { login, InvalidCredentialsError };
+module.exports = {
+    login,
+    registerUser,
+    InvalidCredentialsError,
+    RoleNotFoundError,
+    EmailAlreadyExistsError,
+    DocumentAlreadyExistsError,
+};

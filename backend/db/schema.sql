@@ -50,7 +50,7 @@ CREATE TABLE users (
     status_changed_by     INT REFERENCES users(id),         -- sugerido: auditoría RN-10
     status_changed_at     TIMESTAMP,                        -- sugerido: auditoría RN-10
     created_at            TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at            TIMESTAMP NOT NULL DEFAULT now()  -- sugerido
+    updated_at            TIMESTAMP NOT NULL DEFAULT now(),  -- sugerido
     must_change_password  BOOLEAN NOT NULL DEFAULT true  -- para forzar cambio de contraseña al primer login
 );
 
