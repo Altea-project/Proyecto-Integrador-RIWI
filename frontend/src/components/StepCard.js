@@ -1,11 +1,14 @@
-// Tarjeta que describe un paso con ícono, título, descripción y lista de verificación
+import iconCheck from "../../assets/icon/iconCheck.svg";
+
 export function StepCard({ number, icon, title, description, checklist }) {
   // Convierte cada elemento de la lista en un <li> con palomita de verificación
   const checklistItems = checklist
     .map(
       (item) => `
         <li class="flex items-center gap-2 text-sm text-text-secondary font-body">
-          <span class="text-state-success" aria-hidden="true">✓</span>
+          <span class="text-state-success" aria-hidden="true">
+            <img src="${iconCheck}" alt="Check" class="h-5 w-5" />
+          </span>
           <span>${item}</span>
         </li>
       `,
@@ -13,9 +16,9 @@ export function StepCard({ number, icon, title, description, checklist }) {
     .join("");
 
   return `
-    <div class="rounded-2xl border border-border-default bg-bg-secondary p-8">
-      <div class="mb-6 flex items-center gap-4">
-        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-primary/15 text-brand-primary-light">
+    <div class="rounded-2xl border border-border-default bg-bg-secondary p-6">
+      <div class="mb-6 flex items-center gap-1">
+        <div class="flex items-center justify-center rounded-xl text-brand-primary-light">
           <span aria-hidden="true">${icon}</span>
         </div>
         <span class="font-heading text-3xl font-bold text-border-default">${number}</span>
