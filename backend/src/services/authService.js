@@ -1,8 +1,9 @@
 
 
 // ============================================================
-// service.js
-// Lógica de negocio del login (HU-00).
+// authService.js
+// Lógica de negocio de autenticación (login, HU-00) y registro de
+// usuarios (registerUser, HU-01).
 // Esta capa NO conoce req/res (responsabilidad del controller) ni
 // ejecuta queries SQL directas (responsabilidad del repository).
 // Orquesta: pedir el usuario al repository, validar la contraseña,
@@ -16,7 +17,7 @@ const {
     findUserByDocument,
     findRoleByName,
     createUser,
-} = require('../repositories/authrepository');
+} = require('../repositories/authRepository');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -54,7 +55,7 @@ function generateTempPassword(length = 10) {
 /**
  * Ejecuta el flujo completo de registro de un usuario nuevo (HU-01).
  * Solo debe llamarse desde una ruta protegida por verifyToken +
- * requireRole('admin') (ver authroutes.js).
+ * requireRole('admin') (ver authRoutes.js: POST /users).
  *
  * CA: valida que el rol exista, que el email no esté registrado y,
  * si viene document, que tampoco esté registrado. Genera una
@@ -67,7 +68,8 @@ function generateTempPassword(length = 10) {
  * @param {string} data.role - Nombre del rol (ej. "admin", "coder").
  * @param {string} [data.phone]
  * @param {string} [data.document]
- * @param {string} [data.company]
+ * @param {string} [data.company] - Solo se guarda si role === 'recruiter';
+ *   para cualquier otro rol se ignora y se guarda como null.
  * @returns {Promise<Object>} { user, tempPassword } — tempPassword se
  *   devuelve en texto plano solo esta vez, para que el admin se la
  *   comparta al nuevo usuario (nunca se guarda en texto plano ni se
@@ -94,11 +96,17 @@ async function registerUser({ name, email, role, phone, document, company }) {
         }
     }
 
+    // CA: "company" solo tiene sentido para el rol "recruiter" (empresa
+    // que representa el reclutador). Para cualquier otro rol se ignora,
+    // aunque venga en el body, para no guardar un dato sin sentido de
+    // negocio (ej. un "coder" con company).
+    const finalCompany = role === 'recruiter' ? company : null;
+
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     const newUser = await createUser({
-        name, email, passwordHash, phone, document, company, roleId: roleRecord.id,
+        name, email, passwordHash, phone, document, company: finalCompany, roleId: roleRecord.id,
     });
 
     return {
