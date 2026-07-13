@@ -10,7 +10,11 @@
 // ============================================================
 
 const bcrypt = require('bcrypt');
-const { findUserByEmail } = require('../repositories/repository');
+const { 
+  findUserByEmail, 
+  findRoleByName, 
+  findUserByDocument,  
+  createUser } = require('../repositories/repository');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -21,6 +25,66 @@ const { generateToken } = require('../utils/jwt');
  * de 500.
  */
 class InvalidCredentialsError extends Error {}
+
+class RoleNotFoundError extends Error {} // Error de dominio para rol no encontrado (ej. al crear un usuario con un rol inválido).
+class EmailAlreadyExistsError extends Error {} // Error de dominio para email ya registrado (ej. al crear un usuario con un email que ya existe).
+class DocumentAlreadyExistsError extends Error {} // Error de dominio para documento ya registrado (ej. al crear un usuario con un documento que ya existe).
+
+
+//funcion para generar una contraseña temporal aleatoria
+const crypto = require('crypto'); // usa la libreria crypto de node para generar una contraseña aleatoria segura
+function generateTempPassword(length = 10) {
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = crypto.randomBytes(length);
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += alphabet[bytes[i] % alphabet.length];
+    }
+    return password;
+}
+
+// ahora se crea la funcion para registrar un usuario
+async function registerUser({ name, email, role, phone, document, company }) {
+    const roleRecord = await findRoleByName(role);
+    if (!roleRecord) {
+        throw new RoleNotFoundError(`El rol "${role}" no existe`);
+    }
+
+    const existingByEmail = await findUserByEmail(email);
+    if (existingByEmail) {
+        throw new EmailAlreadyExistsError('Ya existe un usuario registrado con ese correo');
+    }
+
+    if (document) {
+        const existingByDocument = await findUserByDocument(document);
+        if (existingByDocument) {
+            throw new DocumentAlreadyExistsError('Ya existe un usuario registrado con ese documento');
+        }
+    }
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const newUser = await createUser({
+        name, email, passwordHash, phone, document, company, roleId: roleRecord.id,
+    });
+
+    return {
+        user: {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone,
+            document: newUser.document,
+            company: newUser.company,
+            roleId: newUser.role_id,
+            roleName: roleRecord.name,
+            mustChangePassword: newUser.must_change_password,
+        },
+        tempPassword,
+    };
+}
+
 
 /**
  * Ejecuta el flujo completo de login: valida credenciales y arma
@@ -74,4 +138,11 @@ async function login(email, password) {
     };
 }
 
-module.exports = { login, InvalidCredentialsError };
+module.exports = {
+    login,
+    registerUser,
+    InvalidCredentialsError,
+    RoleNotFoundError,
+    EmailAlreadyExistsError,
+    DocumentAlreadyExistsError,
+};

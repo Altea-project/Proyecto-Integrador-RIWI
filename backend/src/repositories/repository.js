@@ -36,4 +36,43 @@ async function findUserByEmail(email) {
     return rows[0];
 }
 
-module.exports = { findUserByEmail };
+async function findUserByDocument(document) {
+    const { rows } = await pool.query(
+        `SELECT id FROM users WHERE document = $1`,
+        [document]
+    );
+    return rows[0];
+}
+
+async function findRoleByName(name) {
+    const { rows } = await pool.query(
+        `SELECT id, name FROM roles WHERE name = $1`,
+        [name]
+    );
+    return rows[0];
+}
+
+async function createUser(user) {
+    const { rows } = await pool.query(
+        `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+        RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at`,
+        [
+            user.name,
+            user.email,
+            user.passwordHash,
+            user.phone || null,
+            user.document || null,
+            user.company || null,
+            user.roleId,
+        ]
+    );
+    return rows[0];
+}
+
+module.exports = {
+    findUserByEmail,
+    findUserByDocument,
+    findRoleByName,
+    createUser,
+};

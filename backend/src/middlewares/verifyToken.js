@@ -27,7 +27,7 @@ const { verifyJwt } = require('../utils/jwt');
  *    req.user (contiene { id, roleId }) y continúa con next().
  */
 function verifyToken(req, res, next) {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers['authorization'];
 
   // El formato esperado es "Bearer <token>". Si no viene o no cumple
   // ese formato, no hay nada que intentar verificar.
@@ -49,17 +49,31 @@ function verifyToken(req, res, next) {
     // a decodificar el token.
     req.user = payload;
     next();
-    } catch (error) {
-    // verifyJwt lanza error si la firma no coincide (token alterado
-    // o firmado con otro secret) o si ya expiró.
-    return res.status(401).json({
-        success: false,
-        error: 'Token inválido o expirado',
-    });
-    }
-}
 
-module.exports = verifyToken;
+    } catch (error) {
+    // Los errores que arroje verifyJwt caerán aquí
+    //y estan personalizados según el tipo de error (TokenExpiredError o JsonWebTokenError)
+    
+    //aqui por si el error es de expiracion, devolvemos un mensaje especifico
+    // ya que con .name se sabe si es expirado por que la libreria jsonwebtoken 
+    // lanza un error con ese nombre que sería "TokenExpiredError"
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'El token ha expirado' 
+      });
+    }
+    
+    //aqui por si el error es de otro tipo, devolvemos un mensaje generico de token invalido
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido' 
+    });
+  }
+};
+
+module.exports = {verifyToken};
 
 /**
  * Ejemplo de uso combinado con un filtro de rol (para HU-01-T2,

@@ -62,4 +62,37 @@ async function login(req, res, next) {
     }
 }
 
-module.exports = { login };
+async function registerUser(req, res, next) {
+    try {
+        const { name, email, role, phone, document, company } = req.body;
+
+        if (!name || !email || !role) {
+            return res.status(400).json({
+                success: false,
+                error: 'name, email y role son obligatorios',
+            });
+        }
+
+        const result = await authService.registerUser({ name, email, role, phone, document, company });
+
+        return res.status(201).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        if (error instanceof authService.RoleNotFoundError) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
+
+        if (
+            error instanceof authService.EmailAlreadyExistsError ||
+            error instanceof authService.DocumentAlreadyExistsError
+        ) {
+            return res.status(409).json({ success: false, error: error.message });
+        }
+
+        next(error);
+    }
+}
+
+module.exports = { login, registerUser };
