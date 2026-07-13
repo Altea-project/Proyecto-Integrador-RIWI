@@ -1,21 +1,60 @@
 import { routes } from "./routes.js";
+//import { getUser } from "../state/store.js";
 
-// Busca la primera ruta que coincida con la URL actual
 function matchRoute(path) {
-  return routes.find((r) => r.path === path);
+  const pathSegments = path.split("/").filter(Boolean);
+
+  for (const route of routes) {
+    if (route.path === "*") continue; // el comodín se evalúa al final, no acá
+
+    const routeSegments = route.path.split("/").filter(Boolean);
+    if (routeSegments.length !== pathSegments.length) continue;
+
+    const params = {};
+    const isMatch = routeSegments.every((segment, i) => {
+      if (segment.startsWith(":")) {
+        params[segment.slice(1)] = pathSegments[i];
+        return true;
+      }
+      return segment === pathSegments[i];
+    });
+
+    if (isMatch) return { route, params };
+  }
+
+  // Ninguna ruta real coincidió: usar el comodín "*"
+  const notFound = routes.find((r) => r.path === "*");
+  return notFound ? { route: notFound, params: {} } : null;
+}
+
+// Verifica si el usuario actual tiene permiso para ver esta ruta
+function isAuthorized(route) {
+  if (!route.roles) return true; // ruta pública, no requiere validación
+
+  const user = getUser();
+  if (!user) return false; // ruta protegida y no hay sesión activa
+
+  return route.roles.includes(user.role);
 }
 
 // Renderiza la vista correspondiente y ejecuta su lógica de montaje
 function render() {
   const path = window.location.pathname;
-  const route = matchRoute(path);
+  const match = matchRoute(path);
   const appRoot = document.getElementById("app");
 
-  if (route) {
-    appRoot.innerHTML = route.view();
-    if (route.mount) {
-      route.mount();
-    }
+  if (!match) return;
+
+  const { route, params } = match;
+
+  if (!isAuthorized(route)) {
+    navigate("/login");
+    return;
+  }
+
+  appRoot.innerHTML = route.view(params);
+  if (route.mount) {
+    route.mount(params);
   }
 }
 
@@ -25,8 +64,22 @@ export function navigate(path) {
   render();
 }
 
+// Intercepta clics en links internos (<a href="/ruta">) para navegar sin recargar
+function handleLinkClicks(event) {
+  const link = event.target.closest("a[href]");
+  if (!link) return;
+
+  const href = link.getAttribute("href");
+  const isInternal = href.startsWith("/") && !href.startsWith("//");
+  if (!isInternal) return;
+
+  event.preventDefault();
+  navigate(href);
+}
+
 // Escucha el botón "atrás/adelante" del navegador para mantener la SPA sincronizada
 export function initRouter() {
   window.addEventListener("popstate", render);
+  document.addEventListener("click", handleLinkClicks);
   render();
 }
