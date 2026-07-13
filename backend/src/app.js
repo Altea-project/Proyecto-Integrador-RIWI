@@ -9,7 +9,7 @@
 const express = require('express');
 const cors = require('cors');
 
-const authRoutes = require('./routes/authroutes');
+const authRoutes = require('./routes/authRoutes');
 const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
 
 const app = express();

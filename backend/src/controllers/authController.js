@@ -9,7 +9,7 @@
 // No contiene lógica de negocio ni queries SQL.
 // ============================================================
 
-const authService = require('../services/authservice');
+const authService = require('../services/authService');
 
 /**
  * POST /login
