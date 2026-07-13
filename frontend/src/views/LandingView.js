@@ -134,7 +134,7 @@ function renderHeader() {
         <img src="${horizontalLogoNegative}" alt="horizontal Logo Negative" class="h-10 w-auto sm:h-12" />
       </a>
         <div class="flex items-center gap-3">
-          <a href="#" class="font-body text-sm font-medium text-text-secondary hover:text-text-primary">Log In</a>
+          <a href="/login" class="font-body text-sm font-medium text-text-secondary hover:text-text-primary">Log In</a>
           ${Button({ text: "Join Now", variant: "primary", extraClasses: "px-3 py-1 text-xs sm:px-6 sm:py-2 sm:text-sm" })}
         </div>
       </div>
