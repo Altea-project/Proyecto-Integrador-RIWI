@@ -1,5 +1,5 @@
 import { LandingView } from "../views/LandingView.js";
-import { LoginView } from "../views/LoginView.js";
+import { LoginView, mountLoginView } from "../views/LoginView.js";
 import { NotFoundView } from "../views/NotFoundView.js";
 
 // import { AdminView, mountAdminView } from "../views/AdminView.js";
@@ -13,7 +13,7 @@ import { NotFoundView } from "../views/NotFoundView.js";
 // Tabla de rutas de la aplicación: ruta, vista y función de montaje
 export const routes = [
   { path: "/", view: LandingView, mount: "", roles: null },
-  { path: "/login", view: LoginView, mount: "", roles: null },
+  { path: "/login", view: LoginView, mount: mountLoginView, roles: null },
   { path: "*", view: NotFoundView, mount: "", roles: null },
 
   // { path: "/admin", view: AdminView, mount: mountAdminView, roles: ["admin"] },
