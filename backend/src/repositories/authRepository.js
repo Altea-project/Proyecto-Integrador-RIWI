@@ -107,4 +107,43 @@ async function createUser(user) {
     return rows[0];
 }
 
-module.exports = { findUserByEmail, findUserByDocument, findRoleByName, createUser };
+/**
+ * Busca un usuario por su id, trayendo tambien el nombre de su rol.
+ * Se usa en la asignacion de TL (HU-01): para confirmar que el usuario
+ * al que se le asigna exista, y para validar que el TL destino tenga
+ * rol "instructor" (revisando su role_name).
+ *
+ * @param {number} id - Id del usuario.
+ * @returns {Promise<Object|undefined>} { id, name, email, role_id, tl_id, role_name } o undefined.
+ */
+async function findUserById(id) {
+    const { rows } = await pool.query(
+        `SELECT u.id, u.name, u.email, u.role_id, u.tl_id, r.name AS role_name
+         FROM users u
+         JOIN roles r ON u.role_id = r.id
+         WHERE u.id = $1`,
+        [id]
+    );
+    return rows[0];
+}
+
+/**
+ * (T2 - issue #66) Guarda la asignacion de TL: actualiza el campo tl_id
+ * del usuario en la tabla "users".
+ *
+ * @param {number} userId - Id del usuario (coder) al que se le asigna el TL.
+ * @param {number} tlId - Id del instructor que sera su TL.
+ * @returns {Promise<Object>} El usuario actualizado.
+ */
+async function updateUserTl(userId, tlId) {
+    const { rows } = await pool.query(
+        `UPDATE users
+         SET tl_id = $1, updated_at = now()
+         WHERE id = $2
+         RETURNING id, name, email, role_id, tl_id`,
+        [tlId, userId]
+    );
+    return rows[0];
+}
+
+module.exports = { findUserByEmail, findUserByDocument, findRoleByName, createUser, findUserById, updateUserTl };
