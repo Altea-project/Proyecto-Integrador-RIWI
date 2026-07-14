@@ -1,16 +1,8 @@
 import { navigate } from "../router/router.js";
-import { GRADIENT_BRAND } from "../utils/constants.js";
 import { validateForm } from "../utils/validators.js";
-
-// Iconos SVG inline usados en el formulario de inicio de sesión
-function googleIcon() {
-  return `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path d="M18.171 10.1709C18.171 9.30732 18.0987 8.68909 17.9411 8.04883H10.1802V11.9766H14.7268C14.6059 12.9515 13.9667 14.3692 12.6029 15.3273L12.587 15.4627L15.272 17.5367L15.4955 17.554C17.1725 16.0036 18.171 13.3645 18.171 10.1709Z" fill="#4285F4"/>
-    <path d="M10.1802 18.3334C12.938 18.3334 15.2561 17.3946 17.4955 15.5537L14.6029 13.3273C13.4578 14.1148 11.9397 14.6657 10.1802 14.6657C7.47807 14.6657 5.18203 12.8667 4.34837 10.4399L4.22062 10.4497L1.42879 12.6018L1.3941 12.7222C3.62158 17.1358 8.06436 18.3334 10.1802 18.3334Z" fill="#34A853"/>
-    <path d="M4.34836 10.4401C4.13449 9.79984 4.00826 9.11507 4.00826 8.40844C4.00826 7.70176 4.13449 7.01704 4.33682 6.37677L4.33073 6.23129L1.49826 4.03906L1.39409 4.0945C0.615318 5.64196 0.166992 7.39501 0.166992 9.40844C0.166992 11.4219 0.615318 13.1749 1.39409 14.7223L4.34836 12.7223V10.4401Z" fill="#FBBC05"/>
-    <path d="M10.1802 2.15096C12.3614 2.15096 13.8393 3.08594 14.6763 3.87262L17.5519 1.08272C15.2446 -1.03807 12.938 -0.00860596 10.1802 -0.00860596C8.06436 -0.00860596 3.62158 1.18896 1.3941 5.60255L4.33683 8.38342C5.18203 5.95662 7.47807 4.15096 10.1802 4.15096Z" fill="#EA4335"/>
-  </svg>`;
-}
+import { authService } from "../services/authService.js";
+import { storage } from "../utils/storage.js";
+import { setUser } from "../state/store.js";
 
 function emailIcon() {
   return `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -37,6 +29,14 @@ function eyeOffIcon() {
   </svg>`;
 }
 
+// Mapea el roleName del usuario autenticado a su ruta de destino tras el login
+const ROLE_ROUTES = {
+  admin: "/admin",
+  coder: "/coder",
+  instructor: "/tl",
+  recruiter: "/recruiter",
+};
+
 // Fondo con efectos visuales y tarjeta centrada de inicio de sesión
 export function LoginView() {
   return `
@@ -62,24 +62,6 @@ export function LoginView() {
             <p class="font-body text-text-secondary text-[15px] sm:text-base mt-2 leading-relaxed">
               Muestra tu trabajo. Conecta con nuevas oportunidades.
             </p>
-          </div>
-
-          <button
-            id="google-btn"
-            type="button"
-            class="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-border-default bg-transparent hover:border-text-secondary focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 px-6 py-3 font-body font-medium text-base text-text-primary transition-all duration-200"
-          >
-            ${googleIcon()}
-            Continuar con Google
-          </button>
-
-          <!-- Separador visual entre el botón de Google y el formulario -->
-          <div class="flex items-center gap-3 my-6">
-            <span class="flex-1 h-px bg-border-default"></span>
-            <span class="text-text-tertiary text-xs font-body uppercase tracking-wide whitespace-nowrap">
-              O continúa con tu correo electrónico
-            </span>
-            <span class="flex-1 h-px bg-border-default"></span>
           </div>
 
           <form id="login-form" novalidate>
@@ -141,11 +123,12 @@ export function LoginView() {
               <p id="password-error" class="text-state-error text-xs font-body mt-1.5 hidden" role="alert"></p>
             </div>
 
+            <p id="form-error" class="text-state-error text-sm font-body text-center mb-3 hidden" role="alert"></p>
+
             <button
               id="submit-btn"
               type="submit"
-              class="w-full rounded-xl py-3.5 font-body font-semibold text-base text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              style="background: ${GRADIENT_BRAND}; box-shadow: 0 0 20px rgba(128, 68, 240, 0.3);"
+              class="w-full rounded-xl py-3.5 font-body font-semibold text-base text-white bg-brand-primary hover:bg-brand-primary-light transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(128,68,240,0.3)]"
             >
               Iniciar sesión
             </button>
@@ -179,9 +162,9 @@ export function mountLoginView() {
   const passwordInput = document.getElementById("password");
   const emailError = document.getElementById("email-error");
   const passwordError = document.getElementById("password-error");
+  const formError = document.getElementById("form-error");
   const toggleBtn = document.getElementById("toggle-password");
   const submitBtn = document.getElementById("submit-btn");
-  const googleBtn = document.getElementById("google-btn");
 
   function showError(element, message) {
     element.textContent = message;
@@ -197,11 +180,17 @@ export function mountLoginView() {
     const { valid, errors } = validateForm({ email: emailInput.value });
     if (!valid) {
       showError(emailError, errors.email);
-      emailInput.classList.add("border-state-error", "focus:border-state-error");
+      emailInput.classList.add(
+        "border-state-error",
+        "focus:border-state-error",
+      );
       return false;
     }
     hideError(emailError);
-    emailInput.classList.remove("border-state-error", "focus:border-state-error");
+    emailInput.classList.remove(
+      "border-state-error",
+      "focus:border-state-error",
+    );
     return true;
   }
 
@@ -209,19 +198,32 @@ export function mountLoginView() {
     const { valid, errors } = validateForm({ password: passwordInput.value });
     if (!valid) {
       showError(passwordError, errors.password);
-      passwordInput.classList.add("border-state-error", "focus:border-state-error");
+      passwordInput.classList.add(
+        "border-state-error",
+        "focus:border-state-error",
+      );
       return false;
     }
     hideError(passwordError);
-    passwordInput.classList.remove("border-state-error", "focus:border-state-error");
+    passwordInput.classList.remove(
+      "border-state-error",
+      "focus:border-state-error",
+    );
     return true;
   }
 
   function clearErrors() {
     hideError(emailError);
     hideError(passwordError);
-    emailInput.classList.remove("border-state-error", "focus:border-state-error");
-    passwordInput.classList.remove("border-state-error", "focus:border-state-error");
+    hideError(formError);
+    emailInput.classList.remove(
+      "border-state-error",
+      "focus:border-state-error",
+    );
+    passwordInput.classList.remove(
+      "border-state-error",
+      "focus:border-state-error",
+    );
   }
 
   emailInput.addEventListener("blur", validateEmail);
@@ -245,20 +247,49 @@ export function mountLoginView() {
     const isPassword = passwordInput.type === "password";
     passwordInput.type = isPassword ? "text" : "password";
     toggleBtn.innerHTML = isPassword ? eyeOffIcon() : eyeIcon();
-    toggleBtn.setAttribute("aria-label", isPassword ? "Ocultar contraseña" : "Mostrar contraseña");
+    toggleBtn.setAttribute(
+      "aria-label",
+      isPassword ? "Ocultar contraseña" : "Mostrar contraseña",
+    );
   });
 
-  // Validación y envío del formulario
-  form.addEventListener("submit", (e) => {
+  // Validación, autenticación real contra el backend y redirección según roleName
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearErrors();
 
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
-    if (isEmailValid && isPasswordValid) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Iniciando sesión...";
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Iniciando sesión...";
+
+    try {
+      const { token, user } = await authService.login({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+
+      storage.setToken(token);
+      setUser(user);
+
+      const destination = ROLE_ROUTES[user.roleName] || "/";
+      navigate(destination);
+    } catch (error) {
+      const message =
+        error.status === 401
+          ? "Correo o contraseña incorrectos."
+          : error.status === 400
+            ? "Completá todos los campos requeridos."
+            : "No pudimos conectar con el servidor. Intentá de nuevo.";
+
+      showError(formError, message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Iniciar sesión";
     }
   });
 
@@ -271,7 +302,4 @@ export function mountLoginView() {
       navigate(path);
     });
   });
-
-  // Placeholder para la integración futura con Google OAuth
-  googleBtn.addEventListener("click", () => {});
 }
