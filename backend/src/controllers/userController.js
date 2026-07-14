@@ -60,4 +60,53 @@ async function registerUser(req, res, next) {
     }
 }
 
-module.exports = { registerUser };
+/**
+ * PATCH /users/:id/assign-tl
+ *
+ * Ruta protegida (admin): asigna un TL (instructor) a un usuario.
+ * :id = usuario que recibe el TL. Body: { tlId } (id del instructor).
+ *
+ * Respuestas:
+ * - 200: asignado -> { success: true, data: { user } }
+ * - 400: falta tlId / ids invalidos, o el TL no es instructor
+ * - 404: el usuario :id no existe
+ * - 500: error inesperado -> manejador central de app.js
+ */
+async function assignTl(req, res, next) {
+    try {
+        const userId = Number(req.params.id);
+        const { tlId } = req.body || {};
+
+        // Validacion de forma (igual estilo que registerUser).
+        if (!tlId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Debes enviar el tlId (id del instructor a asignar como TL)',
+            });
+        }
+        if (!Number.isInteger(userId) || userId <= 0 ||
+            !Number.isInteger(Number(tlId)) || Number(tlId) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'El id del usuario y el tlId deben ser numeros validos',
+            });
+        }
+
+        const user = await authService.assignTl(userId, Number(tlId));
+
+        return res.status(200).json({
+            success: true,
+            data: { user },
+        });
+    } catch (error) {
+        if (error instanceof authService.UserNotFoundError) {
+            return res.status(404).json({ success: false, error: error.message });
+        }
+        if (error instanceof authService.InvalidTlError) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
+        next(error);
+    }
+}
+
+module.exports = { registerUser, assignTl };

@@ -1,5 +1,3 @@
-
-
 // ============================================================
 // authRoutes.js
 // este archivo define las rutas HTTP relacionadas a autenticación y registro
@@ -10,7 +8,7 @@
 
 const express = require('express');
 const { login } = require('../controllers/authController');
-const { registerUser } = require('../controllers/userController');
+const { registerUser, assignTl } = require('../controllers/userController');
 const verifyToken = require('../middlewares/verifyToken');
 const requireRole = require('../middlewares/requireRole');
 
@@ -28,6 +26,11 @@ router.post('/login', login);
 // exista y que el email/document no estén ya registrados antes de
 // insertar (ver authService.registerUser).
 router.post('/users', verifyToken, requireRole('admin'), registerUser);
+
+// PATCH /users/:id/assign-tl — HU-01 (issues #65 y #66): asigna un TL
+// (instructor) a un usuario. Solo un admin autenticado. El service valida
+// que el TL destino tenga rol instructor (T1) y guarda tl_id (T2).
+router.patch('/users/:id/assign-tl', verifyToken, requireRole('admin'), assignTl);
 
 module.exports = router;
 

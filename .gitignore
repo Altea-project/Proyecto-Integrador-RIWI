@@ -19,7 +19,7 @@ Thumbs.db
 # ─── Herramientas de IA locales ────────────────────────────
 .agents/
 skill-lock.json
-.opencode/
+opencode.jsonc
 .mcp/
 .mcp-cache/
 .cursor/

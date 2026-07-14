@@ -1,5 +1,3 @@
-
-
 // ============================================================
 // authService.js
 // Lógica de negocio de autenticación (login, HU-00) y registro de
@@ -17,6 +15,8 @@ const {
     findUserByDocument,
     findRoleByName,
     createUser,
+    findUserById,
+    updateUserTl,
 } = require('../repositories/authRepository');
 const { generateToken } = require('../utils/jwt');
 
@@ -32,6 +32,9 @@ class InvalidCredentialsError extends Error {}
 class RoleNotFoundError extends Error {} // Error de dominio para rol no encontrado (ej. al crear un usuario con un rol inválido).
 class EmailAlreadyExistsError extends Error {} // Error de dominio para email ya registrado (ej. al crear un usuario con un email que ya existe).
 class DocumentAlreadyExistsError extends Error {} // Error de dominio para documento ya registrado (ej. al crear un usuario con un documento que ya existe).
+
+class UserNotFoundError extends Error {} // El usuario indicado (:id) no existe. -> 404
+class InvalidTlError extends Error {}   // El TL indicado no existe o no tiene rol instructor. -> 400
 
 /**
  * Genera una contraseña temporal aleatoria y legible (evita caracteres
@@ -178,6 +181,45 @@ async function login(email, password) {
     };
 }
 
+/**
+ * Asigna un TL (team leader) a un usuario. Es la HU-01:
+ *   - T1 (issue #65): valida que el TL destino exista y tenga rol "instructor".
+ *   - T2 (issue #66): guarda la asignacion actualizando tl_id en la tabla users.
+ *
+ * @param {number} userId - Id del usuario (coder) que recibe el TL.
+ * @param {number} tlId - Id del instructor a asignar como TL.
+ * @returns {Promise<Object>} El usuario actualizado con su nuevo tlId.
+ * @throws {UserNotFoundError} Si el usuario :id no existe (404).
+ * @throws {InvalidTlError} Si el TL no existe o no es instructor (400).
+ */
+async function assignTl(userId, tlId) {
+    // El usuario al que se le asigna el TL debe existir.
+    const user = await findUserById(userId);
+    if (!user) {
+        throw new UserNotFoundError('El usuario indicado no existe');
+    }
+
+    // Validacion central de T1: el TL destino debe existir y ser instructor.
+    const tl = await findUserById(tlId);
+    if (!tl) {
+        throw new InvalidTlError('El TL indicado no existe');
+    }
+    if (tl.role_name !== 'instructor') {
+        throw new InvalidTlError('El usuario asignado como TL debe tener rol instructor');
+    }
+
+    // T2: guardar la asignacion (actualizar tl_id en la tabla users).
+    const updated = await updateUserTl(userId, tlId);
+
+    return {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        roleId: updated.role_id,
+        tlId: updated.tl_id,
+    };
+}
+
 module.exports = {
     login,
     registerUser,
@@ -185,4 +227,7 @@ module.exports = {
     RoleNotFoundError,
     EmailAlreadyExistsError,
     DocumentAlreadyExistsError,
+    assignTl,
+    UserNotFoundError,
+    InvalidTlError,
 };
