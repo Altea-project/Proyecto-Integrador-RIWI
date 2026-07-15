@@ -11,6 +11,7 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/authRoutes');
 const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
+const projectRoutes = require('./routes/projectRoutes'); // T1: crear proyecto (POST /projects)
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.bo
 // (ej: POST /login en authRoutes.js -> queda POST /api/login)
 app.use('/api', authRoutes);
 app.use('/api', passwordRoutes); // PATCH /api/change-password
+app.use('/api', projectRoutes); // POST /api/projects
 
 // Ruta de salud simple, útil para confirmar que el servidor responde
 // antes de probar rutas más complejas.
