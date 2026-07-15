@@ -42,3 +42,8 @@
     font-family: var(--font-heading);
   }
 }
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

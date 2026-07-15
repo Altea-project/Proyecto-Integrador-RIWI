@@ -1,5 +1,3 @@
-
-
 // ============================================================
 // authRepository.js
 // este archivo contiene la Capa de acceso a datos para autenticación.
@@ -8,7 +6,7 @@
 // maneja req/res (eso vive en authController.js / userController.js).
 // ============================================================
 
-const pool = require('../config/db'); // Conexión a Supabase/PostgreSQL ya configurada.
+const pool = require("../config/db"); // Conexión a Supabase/PostgreSQL ya configurada.
 
 /**
  * Busca un usuario por su correo electrónico.
@@ -24,21 +22,42 @@ const pool = require('../config/db'); // Conexión a Supabase/PostgreSQL ya conf
  *   si no existe ningún usuario con ese correo.
  */
 async function findUserByEmail(email) {
-// JOIN con roles para traer el nombre del rol (ej. "admin"), no solo su ID.
-// Esto permite que el JWT lleve roleName y la autorización se haga por
-// nombre en vez de por ID hardcodeado (más robusto ante reordenamientos
-// del seed o diferencias entre entornos).
-    const { rows } = await pool.query(
-        `SELECT u.id, u.name, u.email, u.password_hash, u.role_id, u.must_change_password, r.name as role_name
+  // JOIN con roles para traer el nombre del rol (ej. "admin"), no solo su ID.
+  // Esto permite que el JWT lleve roleName y la autorización se haga por
+  // nombre en vez de por ID hardcodeado (más robusto ante reordenamientos
+  // del seed o diferencias entre entornos).
+  const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, u.password_hash, u.role_id, u.must_change_password, r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.email = $1`,
-        [email]
-    );
+    [email],
+  );
 
-// rows[0] es undefined si no hay coincidencias; el service decide
-// qué hacer con eso (lanzar InvalidCredentialsError).
-    return rows[0];
+  // rows[0] es undefined si no hay coincidencias; el service decide
+  // qué hacer con eso (lanzar InvalidCredentialsError).
+  return rows[0];
+}
+
+/**
+ * Busca un usuario por su id.
+ * Se usa para reconstruir la sesión a partir del token (GET /me):
+ * el token trae el id del usuario, y con esta función confirmamos
+ * quién es y traemos su estado actual (incluyendo must_change_password,
+ * que puede haber cambiado desde que se generó el token).
+ *
+ * @param {number} id - Id del usuario (viene de req.user.id, del token).
+ * @returns {Promise<Object|undefined>} El usuario encontrado, o undefined si no existe.
+ */
+async function findUserById(id) {
+  const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, u.role_id, u.must_change_password, r.name as role_name
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = $1`,
+    [id],
+  );
+  return rows[0];
 }
 
 /**
@@ -50,11 +69,11 @@ async function findUserByEmail(email) {
  * @returns {Promise<Object|undefined>} { id } si existe, undefined si no.
  */
 async function findUserByDocument(document) {
-    const { rows } = await pool.query(
-        `SELECT id FROM users WHERE document = $1`,
-        [document]
-    );
-    return rows[0];
+  const { rows } = await pool.query(
+    `SELECT id FROM users WHERE document = $1`,
+    [document],
+  );
+  return rows[0];
 }
 
 /**
@@ -66,11 +85,11 @@ async function findUserByDocument(document) {
  * @returns {Promise<Object|undefined>} { id, name } si existe, undefined si no.
  */
 async function findRoleByName(name) {
-    const { rows } = await pool.query(
-        `SELECT id, name FROM roles WHERE name = $1`,
-        [name]
-    );
-    return rows[0];
+  const { rows } = await pool.query(
+    `SELECT id, name FROM roles WHERE name = $1`,
+    [name],
+  );
+  return rows[0];
 }
 
 /**
@@ -90,60 +109,27 @@ async function findRoleByName(name) {
  * @returns {Promise<Object>} El usuario recién creado (sin password_hash).
  */
 async function createUser(user) {
-    const { rows } = await pool.query(
-        `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
+  const { rows } = await pool.query(
+    `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
         VALUES ($1, $2, $3, $4, $5, $6, $7, true)
         RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at`,
-        [
-            user.name,
-            user.email,
-            user.passwordHash,
-            user.phone || null,
-            user.document || null,
-            user.company || null,
-            user.roleId,
-        ]
-    );
-    return rows[0];
+    [
+      user.name,
+      user.email,
+      user.passwordHash,
+      user.phone || null,
+      user.document || null,
+      user.company || null,
+      user.roleId,
+    ],
+  );
+  return rows[0];
 }
 
-/**
- * Busca un usuario por su id, trayendo tambien el nombre de su rol.
- * Se usa en la asignacion de TL (HU-01): para confirmar que el usuario
- * al que se le asigna exista, y para validar que el TL destino tenga
- * rol "instructor" (revisando su role_name).
- *
- * @param {number} id - Id del usuario.
- * @returns {Promise<Object|undefined>} { id, name, email, role_id, tl_id, role_name } o undefined.
- */
-async function findUserById(id) {
-    const { rows } = await pool.query(
-        `SELECT u.id, u.name, u.email, u.role_id, u.tl_id, r.name AS role_name
-         FROM users u
-         JOIN roles r ON u.role_id = r.id
-         WHERE u.id = $1`,
-        [id]
-    );
-    return rows[0];
-}
-
-/**
- * (T2 - issue #66) Guarda la asignacion de TL: actualiza el campo tl_id
- * del usuario en la tabla "users".
- *
- * @param {number} userId - Id del usuario (coder) al que se le asigna el TL.
- * @param {number} tlId - Id del instructor que sera su TL.
- * @returns {Promise<Object>} El usuario actualizado.
- */
-async function updateUserTl(userId, tlId) {
-    const { rows } = await pool.query(
-        `UPDATE users
-         SET tl_id = $1, updated_at = now()
-         WHERE id = $2
-         RETURNING id, name, email, role_id, tl_id`,
-        [tlId, userId]
-    );
-    return rows[0];
-}
-
-module.exports = { findUserByEmail, findUserByDocument, findRoleByName, createUser, findUserById, updateUserTl };
+module.exports = {
+  findUserByEmail,
+  findUserByDocument,
+  findRoleByName,
+  createUser,
+  findUserById,
+};

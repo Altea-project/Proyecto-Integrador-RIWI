@@ -1,5 +1,3 @@
-
-
 // ============================================================
 // authController.js
 // Controller de autenticación.
@@ -9,7 +7,7 @@
 // No contiene lógica de negocio ni queries SQL.
 // ============================================================
 
-const authService = require('../services/authService');
+const authService = require("../services/authService");
 
 /**
  * POST /login
@@ -23,17 +21,17 @@ const authService = require('../services/authService');
  * - 500: error inesperado (BD caída, etc.) -> delega al manejador de errores centralizado
  */
 async function login(req, res, next) {
-    try {
+  try {
     const { email, password } = req.body;
 
     // CA-01: validación de forma (no de negocio). Se hace aquí, antes
     // de llamar al service, para no gastar una consulta a la BD con
     // datos que ya sabemos que son inválidos.
     if (!email || !password) {
-        return res.status(400).json({
+      return res.status(400).json({
         success: false,
-        error: 'Correo y contraseña son obligatorios',
-        });
+        error: "Correo y contraseña son obligatorios",
+      });
     }
 
     // Toda la lógica real (buscar usuario, comparar contraseña,
@@ -42,24 +40,59 @@ async function login(req, res, next) {
     const result = await authService.login(email, password);
 
     return res.status(200).json({
-        success: true,
-        data: result,
+      success: true,
+      data: result,
     });
-    } catch (error) {
+  } catch (error) {
     // CA-03: si el error es de credenciales inválidas (lanzado por el
     // service), lo traducimos a un 401 con mensaje genérico.
     if (error instanceof authService.InvalidCredentialsError) {
-        return res.status(401).json({
+      return res.status(401).json({
         success: false,
         error: error.message,
-        });
+      });
     }
 
     // Cualquier otro error (ej. falla de conexión a la BD) no lo
     // manejamos aquí -- se delega al manejador de errores centralizado
     // de Express (middleware con 4 parámetros al final de app.js).
     next(error);
-    }
+  }
 }
 
-module.exports = { login };
+/**
+ * GET /me
+ *
+ * Ruta protegida (verifyToken): devuelve los datos actuales del
+ * usuario dueño del token enviado en el header Authorization.
+ * Se usa al arrancar el frontend para reconstruir la sesión tras
+ * una recarga de página (el token persiste en localStorage, pero
+ * el usuario en memoria se pierde).
+ *
+ * Respuestas posibles:
+ * - 200: -> { success: true, data: { user, mustChangePassword } }
+ * - 401: token no enviado / inválido / expirado (lo maneja verifyToken, antes de llegar acá)
+ * - 404: el id del token ya no corresponde a ningún usuario (ej. fue borrado)
+ * - 500: error inesperado -> delega al manejador de errores centralizado
+ */
+async function getCurrentUser(req, res, next) {
+  try {
+    const result = await authService.getCurrentUser(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    next(error);
+  }
+}
+
+module.exports = { login, getCurrentUser };
