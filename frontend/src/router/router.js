@@ -1,5 +1,5 @@
 import { routes } from "./routes.js";
-//import { getUser } from "../state/store.js";
+import { getUser } from "../state/store.js";
 
 function matchRoute(path) {
   const pathSegments = path.split("/").filter(Boolean);
@@ -29,12 +29,14 @@ function matchRoute(path) {
 
 // Verifica si el usuario actual tiene permiso para ver esta ruta
 function isAuthorized(route) {
-  if (!route.roles) return true; // ruta pública, no requiere validación
+  if (route.roles === undefined) return true;
 
   const user = getUser();
-  if (!user) return false; // ruta protegida y no hay sesión activa
+  if (!user) return false;
 
-  return route.roles.includes(user.role);
+  if (route.roles === null) return true;
+
+  return route.roles.includes(user.roleName);
 }
 
 // Renderiza la vista correspondiente y ejecuta su lógica de montaje
@@ -49,6 +51,13 @@ function render() {
 
   if (!isAuthorized(route)) {
     navigate("/login");
+    return;
+  }
+
+  const user = getUser();
+  const isChangePasswordFlow = path === "/change-password";
+  if (user && user.mustChangePassword && !isChangePasswordFlow) {
+    navigate("/change-password");
     return;
   }
 

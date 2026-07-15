@@ -269,16 +269,20 @@ export function mountLoginView() {
     submitBtn.textContent = "Iniciando sesión...";
 
     try {
-      const { token, user } = await authService.login({
+      const { token, user, mustChangePassword } = await authService.login({
         email: emailInput.value,
         password: passwordInput.value,
       });
 
       storage.setToken(token);
-      setUser(user);
+      setUser({ ...user, mustChangePassword });
 
-      const destination = ROLE_ROUTES[user.roleName] || "/";
-      navigate(destination);
+      if (mustChangePassword) {
+        navigate("/change-password");
+      } else {
+        const destination = ROLE_ROUTES[user.roleName] || "/";
+        navigate(destination);
+      }
     } catch (error) {
       const message =
         error.status === 401

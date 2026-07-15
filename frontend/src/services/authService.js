@@ -7,7 +7,14 @@ export const authService = {
       { email, password },
       { auth: false },
     );
+    return response.data;
+  },
 
+  // Reconstruye la sesión a partir del token guardado (usado al
+  // arrancar la app, ver main.js). auth: true por defecto, así que
+  // apiClient ya adjunta el Authorization: Bearer <token> solo.
+  async getCurrentUser() {
+    const response = await apiClient.get("/me");
     return response.data;
   },
 };
