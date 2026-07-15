@@ -51,11 +51,16 @@ async function createProject(req, res, next) {
       });
     }
 
-    if (skillIds !== undefined && !Array.isArray(skillIds)) {
-      return res.status(400).json({
-        success: false,
-        error: "skillIds debe ser un arreglo de ids numéricos",
-      });
+    if (skillIds !== undefined) {
+      const isValidSkillIds =
+        Array.isArray(skillIds) &&
+        skillIds.every((id) => Number.isInteger(id) && id > 0);
+      if (!isValidSkillIds) {
+        return res.status(400).json({
+          success: false,
+          error: "skillIds debe ser un arreglo de ids numéricos válidos",
+        });
+      }
     }
 
     // coderId siempre sale del token (req.user.id), nunca del body.

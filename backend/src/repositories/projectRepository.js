@@ -10,38 +10,6 @@
 const pool = require("../config/db"); // Conexión a Supabase/PostgreSQL ya configurada.
 
 /**
- * Inserta un nuevo proyecto en la tabla "projects".
- * coder_id siempre viene del backend (req.user.id, extraído del JWT
- * por verifyToken), nunca del body -- así un coder nunca puede crear
- * un proyecto "a nombre de" otro coder.
- *
- * @param {Object} project - Datos del proyecto a crear.
- * @param {number} project.coderId - Id del coder dueño del proyecto (del JWT).
- * @param {string} project.title
- * @param {string} project.description
- * @param {string} project.repoUrl
- * @param {string} [project.imageUrl]
- * @param {boolean} [project.isExternal=false]
- * @returns {Promise<Object>} El proyecto recién creado.
- */
-async function createProject(project) {
-  const { rows } = await pool.query(
-    `INSERT INTO projects (coder_id, title, description, image_url, repo_url, is_external)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, coder_id, title, description, image_url, repo_url, is_external, created_at, updated_at`,
-    [
-      project.coderId,
-      project.title,
-      project.description,
-      project.imageUrl || null,
-      project.repoUrl,
-      project.isExternal || false,
-    ],
-  );
-  return rows[0];
-}
-
-/**
  * Busca varios skills por sus ids. Se usa para validar que todos los
  * skillIds enviados en el body existan antes de vincularlos al
  * proyecto (project_skills), evitando insertar relaciones "huérfanas".
@@ -60,30 +28,66 @@ async function findSkillsByIds(skillIds) {
 }
 
 /**
- * Vincula un proyecto con una lista de skills (tabla puente project_skills,
- * relación N:M -- ver schema.sql sección 5).
- * Se ejecuta después de crear el proyecto y de validar (en el service)
- * que todos los skillIds existan.
+ * Crea un proyecto y vincula sus skills DENTRO de una transacción.
+ * coder_id siempre viene del backend (req.user.id, extraído del JWT
+ * por verifyToken), nunca del body.
  *
- * @param {number} projectId - Id del proyecto recién creado.
- * @param {number[]} skillIds - Ids de skills a vincular.
- * @returns {Promise<void>}
+ * Al usar una transacción (BEGIN/COMMIT/ROLLBACK) con un mismo client,
+ * si el INSERT de project_skills falla justo después de crear el
+ * proyecto, se revierte también la creación del proyecto -> nunca
+ * queda un proyecto "a medias" (sin sus skills).
+ *
+ * @param {Object} project - Datos del proyecto a crear.
+ * @param {number} project.coderId - Id del coder dueño del proyecto (del JWT).
+ * @param {string} project.title
+ * @param {string} project.description
+ * @param {string} project.repoUrl
+ * @param {string} [project.imageUrl]
+ * @param {boolean} [project.isExternal=false]
+ * @param {number[]} [skillIds=[]] - Ids de skills (ya validados) a vincular.
+ * @returns {Promise<Object>} El proyecto recién creado.
  */
-async function linkSkillsToProject(projectId, skillIds) {
-  if (!skillIds || skillIds.length === 0) return;
+async function createProjectWithSkills(project, skillIds = []) {
+  const client = await pool.connect(); // un mismo cliente para toda la transacción
+  try {
+    await client.query("BEGIN");
 
-  // Un solo INSERT con varias filas (más eficiente que un INSERT por skill).
-  // unnest() convierte el arreglo de ids en filas para poder cruzarlas
-  // con el projectId en un solo INSERT ... SELECT.
-  await pool.query(
-    `INSERT INTO project_skills (project_id, skill_id)
-        SELECT $1, unnest($2::int[])`,
-    [projectId, skillIds],
-  );
+    const { rows } = await client.query(
+      `INSERT INTO projects (coder_id, title, description, image_url, repo_url, is_external)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING id, coder_id, title, description, image_url, repo_url, is_external, created_at, updated_at`,
+      [
+        project.coderId,
+        project.title,
+        project.description,
+        project.imageUrl || null,
+        project.repoUrl,
+        project.isExternal || false,
+      ],
+    );
+    const newProject = rows[0];
+
+    if (skillIds && skillIds.length > 0) {
+      // Un solo INSERT con varias filas: unnest convierte el arreglo de
+      // ids en filas para cruzarlas con el projectId.
+      await client.query(
+        `INSERT INTO project_skills (project_id, skill_id)
+            SELECT $1, unnest($2::int[])`,
+        [newProject.id, skillIds],
+      );
+    }
+
+    await client.query("COMMIT");
+    return newProject;
+  } catch (error) {
+    await client.query("ROLLBACK"); // algo falló -> deshacer todo
+    throw error;
+  } finally {
+    client.release(); // SIEMPRE devolver el cliente al pool
+  }
 }
 
 module.exports = {
-  createProject,
   findSkillsByIds,
-  linkSkillsToProject,
+  createProjectWithSkills,
 };

@@ -8,9 +8,8 @@
 // ============================================================
 
 const {
-  createProject,
+  createProjectWithSkills,
   findSkillsByIds,
-  linkSkillsToProject,
 } = require("../repositories/projectRepository");
 
 /**
@@ -66,18 +65,10 @@ async function createProjectForCoder(coderId, data) {
     validSkillIds = uniqueSkillIds;
   }
 
-  const newProject = await createProject({
-    coderId,
-    title,
-    description,
-    repoUrl,
-    imageUrl,
-    isExternal,
-  });
-
-  if (validSkillIds.length > 0) {
-    await linkSkillsToProject(newProject.id, validSkillIds);
-  }
+  const newProject = await createProjectWithSkills(
+    { coderId, title, description, repoUrl, imageUrl, isExternal },
+    validSkillIds,
+  );
 
   return {
     id: newProject.id,
