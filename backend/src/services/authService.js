@@ -192,6 +192,42 @@ async function login(email, password) {
 }
 
 /**
+ * Reconstruye los datos públicos de un usuario a partir de su id
+ * (viene de req.user.id, adjuntado por verifyToken al decodificar
+ * el JWT). Se usa en GET /me para que el frontend pueda "recordar"
+ * la sesión tras una recarga de página, sin depender de tener el
+ * usuario guardado en memoria.
+ *
+ * Se vuelve a consultar la base de datos (en vez de confiar solo en
+ * lo que ya venía en el token) porque mustChangePassword puede haber
+ * cambiado desde que el token se generó -- el token no se re-emite
+ * después de un cambio de contraseña, así que sería un dato viejo si
+ * se leyera directo del payload.
+ *
+ * @param {number} userId - Id del usuario autenticado (req.user.id).
+ * @returns {Promise<Object>} Datos públicos del usuario, mismo shape que login().
+ * @throws {UserNotFoundError} Si el id no corresponde a ningún usuario.
+ */
+async function getCurrentUser(userId) {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new UserNotFoundError("Usuario no encontrado");
+  }
+
+  return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      roleId: user.role_id,
+      roleName: user.role_name,
+    },
+    mustChangePassword: user.must_change_password,
+  };
+}
+
+/**
  * Asigna un TL (team leader) a un usuario. Es la HU-01:
  *   - T1 (issue #65): valida que el TL destino exista y tenga rol "instructor".
  *   - T2 (issue #66): guarda la asignacion actualizando tl_id en la tabla users.

@@ -8,7 +8,7 @@
 
 const express = require("express");
 const { login, getCurrentUser } = require("../controllers/authController");
-const { registerUser } = require("../controllers/userController");
+const { registerUser, assignTl } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
 
