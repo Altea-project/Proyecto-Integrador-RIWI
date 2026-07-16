@@ -155,7 +155,6 @@ export function LoginView() {
   `;
 }
 
-// Conecta los eventos del DOM después de renderizar el template
 export function mountLoginView() {
   const form = document.getElementById("login-form");
   const emailInput = document.getElementById("email");

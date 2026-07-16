@@ -8,7 +8,11 @@
 
 const express = require("express");
 const { login, getCurrentUser } = require("../controllers/authController");
-const { registerUser, assignTl } = require("../controllers/userController");
+const {
+  registerUser,
+  assignTl,
+  getAllUsers,
+} = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
 
@@ -27,6 +31,7 @@ router.get("/me", verifyToken, getCurrentUser);
 // exista y que el email/document no estén ya registrados antes de
 // insertar (ver authService.registerUser).
 router.post("/users", verifyToken, requireRole("admin"), registerUser);
+router.get("/users", verifyToken, requireRole("admin"), getAllUsers);
 
 // PATCH /users/:id/assign-tl — HU-01 (issues #65 y #66): asigna un TL
 // (instructor) a un usuario. Solo un admin autenticado. El service valida

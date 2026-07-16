@@ -16,6 +16,7 @@ const {
   findRoleByName,
   createUser,
   findUserById,
+  findAllUsers,
   updateUserTl,
 } = require("../repositories/authRepository");
 const { generateToken } = require("../utils/jwt");
@@ -228,6 +229,31 @@ async function getCurrentUser(userId) {
 }
 
 /**
+ * Devuelve el listado completo de usuarios (admin). Traduce cada fila
+ * de la base de datos al shape público que espera el frontend.
+ *
+ * @returns {Promise<Array>} Lista de usuarios.
+ */
+async function getAllUsers() {
+  const users = await findAllUsers();
+
+  return users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    document: u.document,
+    company: u.company,
+    roleId: u.role_id,
+    roleName: u.role_name,
+    tlId: u.tl_id,
+    tlName: u.tl_name,
+    mustChangePassword: u.must_change_password,
+    createdAt: u.created_at,
+  }));
+}
+
+/**
  * Asigna un TL (team leader) a un usuario. Es la HU-01:
  *   - T1 (issue #65): valida que el TL destino exista y tenga rol "instructor".
  *   - T2 (issue #66): guarda la asignacion actualizando tl_id en la tabla users.
@@ -272,6 +298,7 @@ module.exports = {
   login,
   registerUser,
   getCurrentUser,
+  getAllUsers,
   InvalidCredentialsError,
   RoleNotFoundError,
   EmailAlreadyExistsError,

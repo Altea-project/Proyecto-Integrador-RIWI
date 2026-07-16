@@ -8,4 +8,28 @@ export const userService = {
     });
     return response;
   },
+
+  async createUser({ name, email, role, phone, document, company }) {
+    const response = await apiClient.post("/users", {
+      name,
+      email,
+      role,
+      phone,
+      document,
+      company,
+    });
+    return response;
+  },
+
+  async getUsers() {
+    const response = await apiClient.get("/users");
+    return response;
+  },
+
+  async assignTl(userId, tlId) {
+    const response = await apiClient.patch(`/users/${userId}/assign-tl`, {
+      tlId,
+    });
+    return response;
+  },
 };
