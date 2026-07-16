@@ -13,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
 const projectRoutes = require('./routes/projectRoutes'); // POST /projects: coder sube su proyecto
 const interestRoutes = require('./routes/interestRoutes'); // POST /interests: reclutador muestra interés en un proyecto
+const gradingRoutes = require('./routes/gradingRoutes'); // HU-06: POST /gradings, PATCH /gradings/:id
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api', authRoutes);
 app.use('/api', passwordRoutes); // PATCH /api/change-password
 app.use('/api', projectRoutes); // POST /api/projects
 app.use('/api/interests', interestRoutes); // POST /api/interests
+app.use('/api', gradingRoutes); // POST /api/gradings, PATCH /api/gradings/:id
 
 // Ruta de salud simple, útil para confirmar que el servidor responde
 // antes de probar rutas más complejas.
