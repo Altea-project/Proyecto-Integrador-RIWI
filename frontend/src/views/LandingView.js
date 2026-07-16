@@ -1,314 +1,264 @@
 // import components
 import { Badge } from "../components/Badge.js";
 import { Button } from "../components/Button.js";
-import { StatItem } from "../components/StatItem.js";
-import { StepCard } from "../components/StepCard.js";
-import { TestimonialCard } from "../components/TestimonialCard.js";
+
 // icon imports
 import iconBolt from "../../assets/icon/iconBolt.svg";
 import iconNet from "../../assets/icon/iconNet.svg";
+import iconUpload from "../../assets/icon/iconUpload.svg";
 import iconCommunity from "../../assets/icon/iconCommunity.svg";
 import iconEmploy from "../../assets/icon/iconEmploy.svg";
-import iconCheck from "../../assets/icon/iconCheck.svg";
 import rightArrow from "../../assets/icon/rightArrow.svg";
-import iconUpload from "../../assets/icon/iconUpload.svg";
 import Gmail from "../../assets/icon/Gmail.svg";
 import LinkedIn from "../../assets/icon/LinkedIn.svg";
-import Instagram from "../../assets/icon/Instagram.svg";
+
 // logo imports
 import horizontalLogoNegative from "../../assets/logos/horizontalLogoNegative.svg";
+
+const RECRUITER_EMAIL = "talento@altea.io";
+const mailtoBody = encodeURIComponent(
+  `Solicitud Acceso Reclutador - Altea\n\nNombre: \nEmpresa: \nContacto: \n\nDeseo acceder al Ledger.`,
+);
+const recruiterAction = `href="mailto:${RECRUITER_EMAIL}?subject=Acceso%20B2B%20Altea&body=${mailtoBody}"`;
 
 const steps = [
   {
     number: "01",
-    icon: `<img src="${iconUpload}" alt="" class="h-14 w-14" />`,
-    title: "Publica Tu Proyecto",
-    description:
-      "Sube tu proyecto: nombre, descripción, enlace al repositorio, demo y las habilidades técnicas que aplicaste. Así vas armando tu portafolio verificable dentro de Altea.",
-    checklist: [
-      "Registro de proyecto con repo y demo",
-      "Habilidades técnicas asociadas",
-      "Portafolio visible en tu perfil",
-    ],
+    icon: iconUpload,
+    title: "Carga de Evidencia",
+    desc: "El Coder vincula proyectos con documentación y repositorios reales.",
   },
   {
     number: "02",
-    icon: `<img src="${iconCommunity}" alt="" class="h-14 w-14" />`,
-    title: "Calificado por tu Team Leader",
-    description:
-      "Tu Team Leader revisa tu proyecto y te asigna una calificación con estrellas, una nota y comentarios técnicos. Esa evaluación queda como respaldo verificado de tu nivel real.",
-    checklist: [
-      "Calificación por estrellas",
-      "Nota y comentario del TL",
-      "Evaluación verificada, no autoevaluada",
-    ],
+    icon: iconCommunity,
+    title: "Auditoría de Mentor",
+    desc: "El TL certifica la arquitectura y lógica asignando un Score oficial.",
   },
   {
     number: "03",
-    icon: `<img src="${iconEmploy}" alt="" class="h-14 w-14" />`,
-    title: "Te Encuentran los Reclutadores",
-    description:
-      "Los reclutadores buscan y filtran coders por habilidades y disponibilidad. Cuando muestran interés en tu perfil, tu Team Leader recibe la notificación y gestiona el siguiente paso contigo.",
-    checklist: [
-      "Búsqueda por habilidades verificadas",
-      "Notificación automática a tu TL",
-      "Seguimiento del estado",
-    ],
+    icon: iconEmploy,
+    title: "Conexión de Valor",
+    desc: "Empresas filtran perfiles ya auditados para una contratación ágil.",
   },
 ];
 
 const testimonials = [
   {
-    quote:
-      "Antes de Altea, mi GitHub era solo ruido. Ahora los reclutadores me escriben cada semana — y ya conocen mi stack antes de la primera llamada. Conseguí mi oferta en una empresa Serie B en menos de tres semanas.",
     initials: "DV",
     name: "Daniela Vargas",
-    role: "Desarrolladora Full-Stack · RIWI Cohorte '24",
-    userType: "DESARROLLADOR",
-    rating: 4,
+    role: "Frontend Dev · RIWI",
+    quote:
+      "En una sola URL, las empresas vieron mi código ya auditado. Es impresionante.",
   },
   {
-    quote:
-      "Reemplazamos todo nuestro proceso de pruebas técnicas con perfiles de Altea. Los badges revisados por pares nos dan una señal 10 veces más predictiva que cualquier currículum.",
     initials: "MW",
     name: "Marcus Webb",
-    role: "Reclutador Senior de Ingeniería · Stripe",
-    userType: "RECLUTADOR",
+    role: "Sr. Recruiter · Stripe",
+    quote:
+      "Dejamos de leer PDFs para mirar Altea. La calidad está garantizada por expertos.",
   },
   {
-    quote:
-      "Soy autodidacta sin título universitario. El sistema de reputación me permitió demostrar mis habilidades de forma objetiva. Recibí tres ofertas competidoras y elegí la del mejor equipo de ingeniería.",
-    initials: "PN",
-    name: "Priya Nair",
-    role: "Ingeniera Backend · Freelancer → Contratada",
-    userType: "DESARROLLADOR",
-  },
-  {
-    quote:
-      "El gráfico de habilidades verificadas reduce nuestro tiempo de selección en un 60%. Vemos exactamente qué lenguajes, frameworks y patrones domina un desarrollador — no lo que dice dominar.",
-    initials: "JO",
-    name: "James Okonkwo",
-    role: "Director de Adquisición de Talento · Vercel",
-    userType: "RECLUTADOR",
-  },
-  {
-    quote:
-      "El proceso de revisión de pares es riguroso pero justo. Recibir feedback de ingenieros senior al inicio de mi carrera comprimió en meses lo que habría tardado años en aprender.",
     initials: "SC",
     name: "Sofía Chen",
-    role: "Desarrolladora React · Bootcamp → Rol Senior",
-    userType: "DESARROLLADOR",
-  },
-  {
+    role: "Software Lead · Uber",
     quote:
-      "Contratamos a cuatro ingenieros de Altea el trimestre pasado. Los cuatro superan el rendimiento de contrataciones por canales tradicionales. La calidad de la señal aquí es simplemente mejor.",
-    initials: "LH",
-    name: "Liam Hartley",
-    role: "VP de Ingeniería · Linear",
-    userType: "RECLUTADOR",
-  },
-];
-
-const brandLogos = ["RIWI", "GitHub", "AWS", "Vercel"];
-
-const footerColumns = [
-  {
-    title: "PRODUCTO",
-    links: ["Cómo Funciona", "Galería de Proyectos", "Para Reclutadores"],
-  },
-  {
-    title: "COMUNIDAD",
-    links: ["Sobre RIWI", "Coders Verificados"],
-  },
-  {
-    title: "EMPRESA",
-    links: ["Contacto", "Política de Privacidad", "Términos de Uso"],
+      "La sinergia entre clanes es oro puro. Es una red social con esteroides técnicos.",
   },
 ];
 
 function renderHeader() {
   return `
-     <header class="sticky top-0 z-20 border-b border-border-default/60 bg-bg-primary/80 backdrop-blur">
-      <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-       <a href="#" class="flex items-center gap-2 font-heading text-lg font-semibold text-text-primary">
-        <img src="${horizontalLogoNegative}" alt="horizontal Logo Negative" class="h-10 w-auto sm:h-12" />
-      </a>
-        <div class="flex items-center gap-3">
-          <a href="/login" class="font-body text-sm font-medium text-text-secondary hover:text-text-primary">Log In</a>
-          ${Button({ text: "Join Now", variant: "primary", extraClasses: "px-3 py-1 text-xs sm:px-6 sm:py-2 sm:text-sm" })}
+    <header class="sticky top-0 z-50 w-full border-b border-white/5 bg-[#0B0E14]/70 backdrop-blur-lg">
+      <div class="mx-auto flex h-14 sm:h-16 max-w-[1400px] items-center justify-between px-6 xl:px-10">
+        <a href="/" class="flex-shrink-0" data-nav>
+          <img src="${horizontalLogoNegative}" alt="Altea" class="h-10 sm:h-10 w-auto" />
+        </a>
+        <div class="flex items-center gap-6">
+          <a href="/login" class="text-[10px] font-bold text-text-secondary hover:text-white transition-all tracking-widest uppercase hidden sm:block">Login</a>
+          <a ${recruiterAction} class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-white text-bg-primary text-[10px] font-black tracking-widest hover:bg-[#8044F0] hover:text-white transition-all uppercase shadow-lg shadow-white/5 active:scale-95">
+            Empresas
+          </a>
         </div>
       </div>
     </header>
   `;
 }
+
 function renderHero() {
   return `
-    <section class="relative overflow-hidden bg-starfield px-6 pb-24 pt-20 text-center">
-      <div class="mx-auto flex max-w-3xl flex-col items-center">
-        <div class="w-full max-w-[92%] sm:max-w-none sm:w-auto [&>span]:flex-wrap [&>span]:justify-center [&>span]:text-center [&>span]:gap-x-2 [&>span]:gap-y-1 [&>span]:max-w-full">
-  ${Badge({ text: "Beta Pública — 300+ desarrolladores ya dentro", icon: `<img src="${iconBolt}" alt="" class="h-3 w-3" />` })}
-</div>
+    <section class="relative px-6 py-20 sm:py-28 lg:py-32 xl:py-40 text-center overflow-hidden">
+      <!-- Glow Adaptativo -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[250px] sm:h-[400px] bg-[#8044F0]/10 rounded-full blur-[120px] pointer-events-none opacity-70"></div>
 
-        <h1 class="mt-6 font-heading text-4xl font-bold leading-tight text-text-primary sm:text-5xl">
-          Tu código, <span class="text-gradient-primary">verificado.</span><br />
-          Tu carrera, acelerada.
+      <div class="relative z-10 mx-auto flex max-w-[1200px] flex-col items-center">
+        <div class="mb-5">
+           <span class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#161B26]/80 border border-white/5 text-[9px] font-black text-brand-primary tracking-[0.25em] uppercase italic">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse"></span> Sistema de Validación Técnica
+           </span>
+        </div>
+
+        <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-8xl font-black leading-[1.1] text-white tracking-tighter uppercase mb-6 drop-shadow-sm">
+          Conocimiento <br class="hidden sm:block" /> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-[#9A6AF5] to-indigo-400 italic">Certificado.</span>
         </h1>
 
-        <p class="mt-6 max-w-xl text-base leading-relaxed text-text-secondary font-body">
-          Altea es el registro oficial de talento técnico donde el código real se convierte en oportunidades reales.
+        <p class="max-w-xl text-xs sm:text-sm lg:text-base text-text-secondary font-medium leading-relaxed mb-10 opacity-70 font-body px-2 sm:px-0">
+          La primera infraestructura donde el talento no se presume: se demuestra ante líderes senior para crear una identidad profesional verificable.
         </p>
 
-        <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row">
-          ${Button({ text: "Empieza como Coder", variant: "primary", icon: `<img src="${iconNet}" alt="" class="h-4 w-4" />`, iconPosition: "left", extraClasses: "w-full justify-center text-xs sm:w-auto sm:text-sm" })}
-          ${Button({ text: "Soy Reclutador", variant: "secondary", icon: `<img src="${rightArrow}" alt="" class="h-4 w-4" />`, iconPosition: "right", extraClasses: "w-full justify-center text-xs sm:w-auto sm:text-sm" })}
+        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-[280px] sm:max-w-none justify-center">
+          <a ${recruiterAction} class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-brand-primary text-white text-[10px] font-black rounded-xl hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-primary/15 tracking-[0.1em] uppercase group">
+            Soy Reclutador 
+            <img src="${rightArrow}" class="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+          </a>
+          <button class="px-8 py-3.5 bg-white/5 border border-border-default backdrop-blur-sm text-text-primary text-[10px] font-black rounded-xl hover:bg-white/10 hover:border-brand-primary/30 transition-all tracking-[0.1em] uppercase">
+             Directorio de Talento
+          </button>
         </div>
 
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-          ${StatItem({ value: "300+", label: "Coders" })}
-          ${StatItem({ value: "10+", label: "Companies" })}
-          ${StatItem({ value: "100%", label: "Verified by Team Leaders" })}
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function renderLogoCloud() {
-  const logos = brandLogos
-    .map(
-      (logo) => `
-        <span class="font-heading text-lg font-semibold text-text-tertiary">${logo}</span>
-      `,
-    )
-    .join("");
-
-  return `
-    <section class="border-y border-border-default/60 px-6 py-14">
-      <div class="mx-auto max-w-5xl text-center">
-        <p class="mb-8 text-xs font-semibold tracking-widest text-text-tertiary font-body">
-          CON LA CONFIANZA DE EQUIPOS EN
-        </p>
-        <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-          ${logos}
+              <div class="mt-16 sm:mt-24 flex flex-wrap justify-center gap-6 sm:gap-12 opacity-30 filter grayscale hover:opacity-50 transition-opacity duration-700">
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              AUDIT PROTOCOL v.1
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default text-brand-primary opacity-80">
+              RIWI BARRANQUILLA
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              Saas INFRASTRUCTURE
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              TECHNICAL LEDGER
+          </span>
         </div>
       </div>
     </section>
   `;
 }
 
-function renderHowItWorks() {
-  const stepCards = steps.map((step) => StepCard(step)).join("");
-
+function renderFeatures() {
   return `
-    <section class="px-6 py-24">
-      <div class="mx-auto max-w-3xl text-center">
-        ${Badge({ text: "Cómo Funciona", variant: "primary" })}
-        <h2 class="mt-5 font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-          Del código a tu carrera en tres pasos
-        </h2>
-        <p class="mt-4 text-base leading-relaxed text-text-secondary font-body">
-          Un proceso estructurado que convierte tus commits en credenciales verificadas en las que los equipos de contratación realmente confían.
-        </p>
-      </div>
-
-      <div class="mx-auto mt-12 flex max-w-3xl flex-col gap-6">
-        ${stepCards}
+    <section class="bg-bg-primary border-y border-white/5 px-6 py-24 sm:py-32">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+            <div class="text-left space-y-5 animate-in slide-in-from-left duration-1000 px-2 sm:px-0">
+               <div class="flex items-center gap-2 font-black text-[8px] sm:text-[9px] text-brand-primary uppercase tracking-[0.4em]">
+                  <div class="h-px w-6 sm:w-10 bg-brand-primary/40"></div>
+                  Metodología Altea
+               </div>
+               <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tighter leading-none uppercase italic italic">Fábrica de <span class="text-brand-primary opacity-90 underline decoration-white/10 underline-offset-8">Garantía.</span></h2>
+               <p class="text-xs sm:text-sm lg:text-base text-text-secondary font-medium leading-relaxed max-w-md font-body opacity-60 italic italic">
+                  Transformamos proyectos de formación en evidencia de grado profesional lista para contrataciones críticas.
+               </p>
+            </div>
+            
+            <div class="grid gap-4 sm:gap-6">
+                ${steps
+                  .map(
+                    (step) => `
+                    <div class="p-6 sm:p-7 rounded-[28px] bg-bg-secondary/40 border border-white/[0.04] hover:border-brand-primary/30 transition-all duration-500 flex items-center sm:items-start gap-6 group hover:bg-[#161B26]/80">
+                        <div class="w-10 h-10 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#0B0E14] border border-white/10 text-brand-primary shadow-lg shadow-black/20 group-hover:scale-105 transition-transform duration-300">
+                           <img src="${step.icon}" class="w-14 h-14 sm:w-16 sm:h-16 opacity-80" />
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-[10px] sm:text-[11px] font-black text-text-primary uppercase tracking-widest transition-colors">${step.title}</h3>
+                            <p class="text-[11px] sm:text-[12px] text-text-secondary leading-relaxed max-w-[280px] font-medium opacity-60">${step.desc}</p>
+                        </div>
+                    </div>
+                `,
+                  )
+                  .join("")}
+            </div>
+        </div>
       </div>
     </section>
   `;
 }
 
 function renderTestimonials() {
-  const cards = testimonials.map((t) => TestimonialCard(t)).join("");
-
   return `
-    <section class="px-6 py-24">
-      <div class="mx-auto max-w-3xl text-center">
-        ${Badge({ text: "Lo Que Dicen", variant: "primary" })}
-        <h2 class="mt-5 font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-          Con la confianza de coders y los equipos que los contratan
-        </h2>
-      </div>
+    <section class="bg-gradient-to-b from-[#161B26]/10 to-transparent px-6 py-24 sm:py-32">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="text-center lg:text-left mb-14 px-2">
+            <h2 class="text-4xl sm:text-5xl font-black text-white tracking-tight uppercase leading-none italic mb-4 italic italic">Confianza. <span class="text-brand-primary">Casos de éxito.</span></h2>
+            <div class="w-10 h-1 bg-brand-primary rounded-full mx-auto lg:mx-0 opacity-40"></div>
+        </div>
 
-      <div class="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
-        ${cards}
+        <div class="grid lg:grid-cols-3 gap-6">
+           ${testimonials
+             .map(
+               (t) => `
+               <div class="p-8 sm:p-9 rounded-[35px] bg-[#161B26]/20 border border-white/[0.05] relative group hover:bg-[#1F2430]/30 transition-all hover:translate-y-[-2px]">
+                  <p class="text-[13px] sm:text-sm text-text-primary leading-relaxed italic font-medium opacity-80 relative z-10 font-body mb-10">"${t.quote}"</p>
+                  <div class="flex items-center gap-4 border-t border-white/5 pt-7 relative z-10">
+                     <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-indigo-600 flex items-center justify-center font-black text-[9px] text-white shadow-xl shadow-brand-primary/10">${t.initials}</div>
+                     <div class="flex flex-col">
+                        <span class="text-[11px] font-black text-white tracking-tight uppercase font-heading group-hover:text-brand-primary transition-colors">${t.name}</span>
+                        <span class="text-[8px] font-black text-brand-primary tracking-widest italic opacity-60 uppercase">${t.role}</span>
+                     </div>
+                  </div>
+                  <div class="absolute top-6 right-8 text-[32px] font-black text-brand-primary opacity-5 italic select-none">”</div>
+               </div>
+           `,
+             )
+             .join("")}
+        </div>
       </div>
     </section>
   `;
 }
 
-function renderFinalCta() {
+function renderFinalCTA() {
   return `
-    <section class="px-6 pb-24">
-      <div class="mx-auto max-w-4xl rounded-3xl border border-border-default bg-bg-secondary px-8 py-16 text-center">
-        ${Badge({ text: "Sin CV Requerido", icon: `<img src="${iconBolt}" alt="" class="h-3 w-3" />` })}
-        <h2 class="mt-5 font-heading text-3xl font-bold text-text-primary sm:text-4xl">
-          Tu código es tu currículum.
-        </h2>
-        <p class="mx-auto mt-4 max-w-xl text-base leading-relaxed text-text-secondary font-body">
-          Únete a miles de desarrolladores que dejan que su trabajo hable por ellos. Empieza a construir tu portafolio verificado hoy.
-        </p>
-        <div class="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
-  ${Button({ text: "Únete como Coder — Es Gratis", variant: "primary", icon: `<img src="${iconNet}" alt="" class="h-3 w-3" />`, iconPosition: "left", extraClasses: "w-full justify-center text-xs sm:w-auto sm:text-sm" })}
-  ${Button({ text: "Contratar Talento", variant: "secondary", icon: `<img src="${rightArrow}" alt="" class="h-3 w-3" />`, iconPosition: "right", extraClasses: "w-full justify-center text-xs sm:w-auto sm:text-sm" })}
-</div>
+    <section class="px-6 py-24 sm:py-40">
+      <div class="mx-auto max-w-[1100px] rounded-[45px] bg-[#161B26] border border-white/[0.04] p-10 lg:p-20 relative overflow-hidden shadow-2xl shadow-black/40">
+          <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+          
+          <div class="relative z-10 text-center space-y-6 sm:space-y-8">
+            <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-tight italic">Acceso Privado a la <span class="text-brand-primary underline decoration-brand-primary/10 underline-offset-[12px]">Elite Técnica.</span></h2>
+            <p class="text-xs sm:text-base text-text-secondary font-medium max-w-md mx-auto opacity-70 italic font-body">
+                Reclutadores filtran talento auditado bajo estándares industriales en Barranquilla y para el mundo.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-5 justify-center items-center pt-4">
+              <a ${recruiterAction} class="inline-flex px-10 py-4 bg-brand-primary text-white text-[10px] font-black rounded-xl tracking-widest uppercase hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-primary/20 italic">
+                Solicitar Conexión
+              </a>
+            </div>
+          </div>
       </div>
     </section>
   `;
 }
 
 function renderFooter() {
-  const columns = footerColumns
-    .map(
-      (col) => `
-        <div>
-          <p class="mb-4 text-xs font-semibold tracking-widest text-text-tertiary font-body">${col.title}</p>
-          <ul class="space-y-3">
-            ${col.links
-              .map(
-                (link) => `
-                  <li>
-                    <a href="#" class="text-sm text-text-secondary hover:text-text-primary font-body">${link}</a>
-                  </li>
-                `,
-              )
-              .join("")}
-          </ul>
-        </div>
-      `,
-    )
-    .join("");
-
   return `
-    <footer class="border-t border-border-default/60 px-6 pt-16 pb-8">
-      <div class="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-[2fr_1fr_1fr_1fr]">
-        <div>
-          <a href="#" class="flex items-center gap-2 font-heading text-lg font-semibold text-text-primary">
-             <img src="../assets/logos/horizontalLogoNegative.svg" alt="Altea" class="h-12 w-auto" />
-          </a>
-          <p class="mt-4 max-w-xs text-sm leading-relaxed text-text-secondary font-body">
-            El registro oficial de talento técnico donde los desarrolladores demuestran sus habilidades reales.
-          </p>
-          <div class="mt-6 flex items-center gap-4 text-text-secondary">
-            <a href="#" aria-label="Instagram" class="hover:opacity-75">
-              <img src="${Instagram}" alt="" class="h-6 w-6" />
-            </a>
-            <a href="#" aria-label="LinkedIn" class="hover:opacity-75">
-              <img src="${LinkedIn}" alt="" class="h-6 w-6" />
-            </a>
-            <a href="#" aria-label="Gmail" class="hover:opacity-75">
-              <img src="${Gmail}" alt="" class="h-6 w-6" />
-            </a>
-          </div>
+    <footer class="bg-bg-primary px-6 py-14 border-t border-white/5 font-body">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-12 pb-16 px-4">
+            <div class="space-y-4">
+                <img src="${horizontalLogoNegative}" alt="Altea" class="h-6 sm:h-7 opacity-30 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-700" />
+                <p class="text-[10px] font-bold text-text-tertiary tracking-[0.2em] max-w-[240px] uppercase leading-tight italic">Vinculación de talento por RIWI Academy.</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-12 sm:gap-20 text-[9px] font-black tracking-[0.25em] text-text-tertiary uppercase">
+                <div class="flex flex-col gap-5">
+                    <span class="text-white opacity-20 italic">Ledger</span>
+                    <a href="#" class="hover:text-brand-primary transition-all">Auditados</a>
+                    <a href="#" class="hover:text-brand-primary transition-all">Clanes IT</a>
+                </div>
+                <div class="flex flex-col gap-5">
+                    <span class="text-white opacity-20 italic">Oficial</span>
+                    <a href="#" class="hover:text-brand-primary transition-all">Protocolo</a>
+                    <a href="#" class="hover:text-brand-primary transition-all">Seguridad</a>
+                </div>
+            </div>
         </div>
 
-        ${columns}
-      </div>
-
-      <div class="mx-auto mt-12 max-w-7xl border-t border-border-default/60 pt-6">
-            <p class="text-xs text-text-tertiary font-body">
-              © ${new Date().getFullYear()} Altea. Todos los derechos reservados.
-        </p>
+        <div class="pt-10 flex flex-col md:flex-row justify-between items-center border-t border-white/[0.03] text-[8px] font-black text-text-tertiary tracking-[0.35em] uppercase italic opacity-40">
+            <span>© ${new Date().getFullYear()} ALTEA · EL PRÓXIMO ESCALAFÓN TÉCNICO</span>
+            <div class="flex gap-6 mt-5 sm:mt-0 grayscale">
+                  <a href="#"><img src="${LinkedIn}" class="w-3.5 h-3.5"/></a>
+                  <a href="#"><img src="${Gmail}" class="w-3.5 h-3.5"/></a>
+            </div>
+        </div>
       </div>
     </footer>
   `;
@@ -316,14 +266,15 @@ function renderFooter() {
 
 export function LandingView() {
   return `
-    ${renderHeader()}
-    <main>
-      ${renderHero()}
-      ${renderLogoCloud()}
-      ${renderHowItWorks()}
-      ${renderTestimonials()}
-      ${renderFinalCta()}
-    </main>
-    ${renderFooter()}
+    <div class="bg-bg-primary text-white selection:bg-brand-primary/50 font-body antialiased overflow-x-hidden min-h-screen">
+      ${renderHeader()}
+      <main class="animate-in fade-in zoom-in-95 duration-700 ease-out">
+        ${renderHero()}
+        ${renderFeatures()}
+        ${renderTestimonials()}
+        ${renderFinalCTA()}
+      </main>
+      ${renderFooter()}
+    </div>
   `;
 }

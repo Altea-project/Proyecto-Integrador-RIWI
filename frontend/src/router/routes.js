@@ -5,8 +5,7 @@ import {
   mountChangePasswordView,
 } from "../views/ChangePasswordView.js";
 import { NotFoundView } from "../views/NotFoundView.js";
-
-// import { AdminView, mountAdminView } from "../views/AdminView.js";
+import { AdminView, mountAdminView } from "../views/AdminView.js";
 // import { CoderDashboard, mountCoderDashboard } from "../views/CoderDashboard.js";
 // import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
 // import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
@@ -24,8 +23,7 @@ export const routes = [
     mount: mountChangePasswordView,
   },
   { path: "*", view: NotFoundView, mount: "", roles: null },
-
-  // { path: "/admin", view: AdminView, mount: mountAdminView, roles: ["admin"] },
+  { path: "/admin", view: AdminView, mount: mountAdminView, roles: ["admin"] },
   // {
   //   path: "/coder",
   //   view: CoderDashboard,

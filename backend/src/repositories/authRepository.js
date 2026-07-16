@@ -61,6 +61,27 @@ async function findUserById(id) {
 }
 
 /**
+ * Trae el listado completo de usuarios, con su rol y su TL asignado (si tiene).
+ * Se usa en GET /users (admin) para poblar la tabla del Dashboard.
+ *
+ * @returns {Promise<Array>} Lista de usuarios con role_name, tl_id y tl_name.
+ */
+async function findAllUsers() {
+  const { rows } = await pool.query(
+    `SELECT
+        u.id, u.name, u.email, u.phone, u.document, u.company,
+        u.role_id, r.name as role_name,
+        u.tl_id, tl.name as tl_name,
+        u.must_change_password, u.created_at
+      FROM users u
+      JOIN roles r ON u.role_id = r.id
+      LEFT JOIN users tl ON u.tl_id = tl.id
+      ORDER BY u.created_at DESC`,
+  );
+  return rows;
+}
+
+/**
  * Busca un usuario por su número de documento.
  * Se usa en el registro (HU-01) para validar que no exista ya un
  * usuario con ese documento antes de crear uno nuevo.
@@ -158,6 +179,23 @@ async function findUserProfileById(id) {
   return rows[0];
 }
 
+/**
+ * Actualiza el tl_id de un usuario (le asigna un Team Leader).
+ * Se usa en PATCH /users/:id/assign-tl.
+ *
+ * @param {number} userId - Id del usuario (coder) al que se le asigna el TL.
+ * @param {number} tlId - Id del instructor asignado como TL.
+ * @returns {Promise<Object>} El usuario actualizado.
+ */
+async function updateUserTl(userId, tlId) {
+  const { rows } = await pool.query(
+    `UPDATE users SET tl_id = $1 WHERE id = $2
+     RETURNING id, name, email, role_id, tl_id`,
+    [tlId, userId],
+  );
+  return rows[0];
+}
+
 module.exports = {
   findUserByEmail,
   findUserByDocument,
@@ -165,4 +203,6 @@ module.exports = {
   createUser,
   findUserById,
   findUserProfileById,
+  findAllUsers,
+  updateUserTl,
 };
