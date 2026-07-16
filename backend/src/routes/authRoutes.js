@@ -12,6 +12,7 @@ const {
   registerUser,
   assignTl,
   getAllUsers,
+  getMyProfile,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
