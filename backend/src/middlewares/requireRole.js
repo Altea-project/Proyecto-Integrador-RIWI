@@ -14,7 +14,7 @@
 // req.user ya exista (verifyToken es quien lo llena).
 // ============================================================
 
-/**
+/*
  * Fábrica de middlewares de autorización por rol.
  *
  * @param {...string} allowedRoles - Nombres de rol permitidos (ej. 'admin').
@@ -29,6 +29,7 @@
  * // Admin o Instructor (ejemplo de reutilización futura):
  * router.post('/gradings', verifyToken, requireRole('admin', 'instructor'), createGrading);
  */
+
 function requireRole(...allowedRoles) {
     const normalizedAllowedRoles = allowedRoles.map((role) => role.toLowerCase());
 

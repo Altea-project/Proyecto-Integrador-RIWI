@@ -26,17 +26,17 @@ async function findUserByEmail(email) {
   // Esto permite que el JWT lleve roleName y la autorización se haga por
   // nombre en vez de por ID hardcodeado (más robusto ante reordenamientos
   // del seed o diferencias entre entornos).
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.password_hash, u.role_id, u.must_change_password, r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.email = $1`,
     [email],
-  );
+    );
 
   // rows[0] es undefined si no hay coincidencias; el service decide
   // qué hacer con eso (lanzar InvalidCredentialsError).
-  return rows[0];
+    return rows[0];
 }
 
 /**
@@ -50,14 +50,14 @@ async function findUserByEmail(email) {
  * @returns {Promise<Object|undefined>} El usuario encontrado, o undefined si no existe.
  */
 async function findUserById(id) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.role_id, u.must_change_password, r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.id = $1`,
     [id],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -69,11 +69,11 @@ async function findUserById(id) {
  * @returns {Promise<Object|undefined>} { id } si existe, undefined si no.
  */
 async function findUserByDocument(document) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT id FROM users WHERE document = $1`,
     [document],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -85,11 +85,11 @@ async function findUserByDocument(document) {
  * @returns {Promise<Object|undefined>} { id, name } si existe, undefined si no.
  */
 async function findRoleByName(name) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT id, name FROM roles WHERE name = $1`,
     [name],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -109,21 +109,21 @@ async function findRoleByName(name) {
  * @returns {Promise<Object>} El usuario recién creado (sin password_hash).
  */
 async function createUser(user) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
         VALUES ($1, $2, $3, $4, $5, $6, $7, true)
         RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at`,
     [
-      user.name,
-      user.email,
-      user.passwordHash,
-      user.phone || null,
-      user.document || null,
-      user.company || null,
-      user.roleId,
+        user.name,
+        user.email,
+        user.passwordHash,
+        user.phone || null,
+        user.document || null,
+        user.company || null,
+        user.roleId,
     ],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -142,7 +142,7 @@ async function createUser(user) {
  * @returns {Promise<Object|undefined>} El perfil encontrado, o undefined si no existe.
  */
 async function findUserProfileById(id) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
             u.role_id, r.name AS role_name,
             u.tl_id, tl.name AS tl_name,
@@ -154,15 +154,15 @@ async function findUserProfileById(id) {
         LEFT JOIN users tl ON u.tl_id = tl.id
         WHERE u.id = $1`,
     [id],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 module.exports = {
-  findUserByEmail,
-  findUserByDocument,
-  findRoleByName,
-  createUser,
-  findUserById,
-  findUserProfileById,
+    findUserByEmail,
+    findUserByDocument,
+    findRoleByName,
+    createUser,
+    findUserById,
+    findUserProfileById,
 };
