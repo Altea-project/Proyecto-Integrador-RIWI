@@ -109,4 +109,41 @@ async function assignTl(req, res, next) {
     }
 }
 
-module.exports = { registerUser, assignTl };
+/**
+ * GET /users/me
+ *
+ * Ruta protegida (verifyToken): retorna el perfil completo del coder
+ * (o cualquier usuario) autenticado, incluido availability_status.
+ * A diferencia de GET /me (authController), que solo trae los datos
+ * mínimos de sesión, este endpoint trae el perfil completo que
+ * necesita el dashboard del coder (CA-01: pintar el badge de estado).
+ *
+ * Es de solo lectura (CA-03): no recibe body ni permite modificar
+ * availability_status; ese cambio lo hace el TL/admin desde otro
+ * endpoint. El coder solo ve el valor actualizado al recargar la
+ * vista (CA-02), ya que cada llamada consulta la BD en tiempo real.
+ *
+ * Respuestas posibles:
+ * - 200: -> { success: true, data: { user } } (user incluye availabilityStatus)
+ * - 401: token no enviado / inválido / expirado (lo maneja verifyToken, antes de llegar acá)
+ * - 404: el id del token ya no corresponde a ningún usuario (ej. fue borrado)
+ * - 500: error inesperado -> delega al manejador de errores centralizado
+ */
+async function getMyProfile(req, res, next) {
+    try {
+        const user = await authService.getMyProfile(req.user.id);
+
+        return res.status(200).json({
+            success: true,
+            data: { user },
+        });
+    } catch (error) {
+        if (error instanceof authService.UserNotFoundError) {
+            return res.status(404).json({ success: false, error: error.message });
+        }
+
+        next(error);
+    }
+}
+
+module.exports = { registerUser, assignTl, getMyProfile };
