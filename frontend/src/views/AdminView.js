@@ -126,31 +126,60 @@ function renderTempPasswordModal() {
 function renderAssignTlModal() {
   return Modal({
     id: "modal-assign-tl",
-    title: "Vincular Mentoría",
+    title: "Vincular Protocolo de Mentoría",
     size: "sm",
     content: `
-      <div class="space-y-6 pt-2">
-        <p class="text-xs text-text-secondary uppercase tracking-widest font-semibold flex gap-2 items-center">
-          Perfil Coder: <span id="assign-tl-coder-name" class="text-text-primary font-black"></span>
-        </p>
-        <div class="space-y-2">
-          <label class="text-[10px] font-black text-text-tertiary uppercase tracking-widest pl-1">Asignar Team Leader Certificado</label>
-          <select id="assign-tl-select" class="w-full bg-bg-primary border border-border-default rounded-xl px-5 py-3.5 text-sm text-text-primary font-medium focus:border-[#8044F0] focus:ring-2 focus:ring-[#8044F0]/20 outline-none transition-all cursor-pointer">
-            <option value="">Buscar en el roster de mentores...</option>
-          </select>
-          <p id="assign-tl-error" class="text-state-error text-[10px] font-bold pl-1 hidden"></p>
+      <div class="space-y-8 pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
+        
+        <!-- Badge de Contexto: Identidad del Coder -->
+        <div class="p-5 bg-white/[0.02] border border-white/[0.05] rounded-[24px] relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-1 h-full bg-[#8044F0] opacity-60"></div>
+            <p class="text-[9px] font-black text-text-tertiary uppercase tracking-[0.25em] mb-3 italic">Miembro a Certificar</p>
+            <div class="flex items-center gap-3">
+               <div class="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
+                  <svg width="14" height="14" class="text-brand-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+               </div>
+               <span id="assign-tl-coder-name" class="text-lg font-black text-white tracking-tighter uppercase font-heading group-hover:text-brand-primary transition-colors"></span>
+            </div>
         </div>
+
+        <!-- Selector de Mentor -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between pl-1">
+             <label class="text-[10px] font-black text-[#8044F0] uppercase tracking-[0.2em]">Escoger Auditor Técnico</label>
+             <span class="text-[9px] text-text-tertiary font-bold tracking-widest italic opacity-50 underline decoration-[#8044F0]/40">TL Nivel 2+</span>
+          </div>
+          
+          <div class="relative group">
+             <select id="assign-tl-select" class="w-full bg-[#0B0E14] border-2 border-border-default rounded-[18px] px-5 py-4 text-sm text-text-primary font-medium focus:border-brand-primary/50 focus:ring-4 focus:ring-brand-primary/5 outline-none transition-all cursor-pointer appearance-none">
+                <option value="">Desplegar Roster de Mentores...</option>
+             </select>
+             <!-- Icono custom para el select -->
+             <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary group-focus-within:text-brand-primary transition-colors">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+             </div>
+          </div>
+          
+          <p id="assign-tl-error" class="bg-state-error/10 text-state-error text-[10px] font-black p-3 rounded-xl border border-state-error/20 mt-3 hidden text-center uppercase tracking-tight"></p>
+        </div>
+
+        <p class="text-[9px] text-text-tertiary text-center leading-relaxed font-medium uppercase tracking-widest px-4 opacity-40">
+           Al vincular un mentor, el Coder heredará automáticamente la línea de supervisión y reporte para empresas externas.
+        </p>
       </div>
     `,
     footer: `
-      <div class="flex items-center justify-end gap-5 w-full pt-4">
-        <button type="button" data-modal-close="modal-assign-tl" class="text-[10px] font-black text-text-tertiary hover:text-text-primary tracking-widest uppercase transition-all duration-200">CANCELAR</button>
-        <button type="button" id="assign-tl-submit-btn" class="px-8 py-3.5 bg-text-primary text-bg-primary text-[11px] font-black rounded-xl hover:shadow-[0_10px_20px_rgba(255,255,255,0.1)] transition-all tracking-widest active:scale-95">ASIGNAR</button>
+      <div class="flex items-center justify-between w-full pt-6 mt-2 border-t border-border-default/40">
+        <button type="button" data-modal-close="modal-assign-tl" class="text-[10px] font-black text-text-tertiary hover:text-text-primary tracking-widest uppercase transition-all duration-300 hover:scale-105 active:scale-90">
+          Descargar
+        </button>
+        <button type="button" id="assign-tl-submit-btn" class="px-10 py-4 bg-text-primary text-bg-primary text-[11px] font-black rounded-xl hover:bg-brand-primary hover:text-white transition-all tracking-[0.2em] shadow-xl active:scale-95 shadow-white/5 uppercase active:shadow-brand-primary/20">
+          Asignar Auditor
+        </button>
       </div>
     `,
   });
 }
-
 // --- VISTA DASHBOARD (HIGH FIDELITY) ---
 export function AdminView() {
   return `

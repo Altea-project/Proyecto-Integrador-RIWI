@@ -1,9 +1,6 @@
 // import components
 import { Badge } from "../components/Badge.js";
 import { Button } from "../components/Button.js";
-import { StatItem } from "../components/StatItem.js";
-import { StepCard } from "../components/StepCard.js";
-import { TestimonialCard } from "../components/TestimonialCard.js";
 
 // icon imports
 import iconBolt from "../../assets/icon/iconBolt.svg";
@@ -14,104 +11,72 @@ import iconEmploy from "../../assets/icon/iconEmploy.svg";
 import rightArrow from "../../assets/icon/rightArrow.svg";
 import Gmail from "../../assets/icon/Gmail.svg";
 import LinkedIn from "../../assets/icon/LinkedIn.svg";
-import Instagram from "../../assets/icon/Instagram.svg";
 
 // logo imports
 import horizontalLogoNegative from "../../assets/logos/horizontalLogoNegative.svg";
 
-// --- CONFIGURACIÓN DE ACCESO PROFESIONAL (MAILTO) ---
-const RECRUITER_EMAIL = "vinculacion@riwi.io";
-const mailtoBody = encodeURIComponent(`Hola equipo Altea/RIWI,
-
-Me interesa solicitar acceso profesional como reclutador para contratar talento verificado.
-
-Mis datos de contacto:
-- Nombre completo: 
-- Teléfono: 
-- Nombre de la Empresa: 
-- Correo corporativo: 
-
-Quedo atento a sus instrucciones.`);
-
-const recruiterAction = `href="mailto:${RECRUITER_EMAIL}?subject=Solicitud%20Acceso%20Empresarial%20-%20Altea&body=${mailtoBody}"`;
+const RECRUITER_EMAIL = "talento@altea.io";
+const mailtoBody = encodeURIComponent(
+  `Solicitud Acceso Reclutador - Altea\n\nNombre: \nEmpresa: \nContacto: \n\nDeseo acceder al Ledger.`,
+);
+const recruiterAction = `href="mailto:${RECRUITER_EMAIL}?subject=Acceso%20B2B%20Altea&body=${mailtoBody}"`;
 
 const steps = [
   {
     number: "01",
-    icon: `<div class="p-3 bg-[#8044F0]/20 rounded-xl"><img src="${iconUpload}" alt="" class="h-16 w-16" /></div>`,
-    title: "Documentación de Evidencia",
-    description:
-      "Sube proyectos con descripción técnica, repositorios y demos reales. Empieza a construir un historial innegable.",
-    checklist: [
-      "Registro de repo y demo",
-      "Tags técnicos reales",
-      "Identidad verificada",
-    ],
+    icon: iconUpload,
+    title: "Carga de Evidencia",
+    desc: "El Coder vincula proyectos con documentación y repositorios reales.",
   },
   {
     number: "02",
-    icon: `<div class="p-3 bg-[#8044F0]/20 rounded-xl"><img src="${iconCommunity}" alt="" class="h-16 w-16" /></div>`,
-    title: "Auditoría por Expertos",
-    description:
-      "Tu Team Leader certifica tu código con notas, estrellas de distinción y feedback profesional directo.",
-    checklist: [
-      "Veredicto de mentor senior",
-      "Cálculo de Score real",
-      "Certificación por código",
-    ],
+    icon: iconCommunity,
+    title: "Auditoría de Mentor",
+    desc: "El TL certifica la arquitectura y lógica asignando un Score oficial.",
   },
   {
     number: "03",
-    icon: `<div class="p-3 bg-[#8044F0]/20 rounded-xl"><img src="${iconEmploy}" alt="" class="h-16 w-16" /></div>`,
-    title: "Sinergia de Contratación",
-    description:
-      "Empresas buscan por habilidades exactas. Cuando conectan con tu talento, el flujo de acceso se agiliza.",
-    checklist: [
-      "Visibilidad estratégica",
-      "Métricas de Pipeline",
-      "Conexión B2B segura",
-    ],
+    icon: iconEmploy,
+    title: "Conexión de Valor",
+    desc: "Empresas filtran perfiles ya auditados para una contratación ágil.",
   },
 ];
 
 const testimonials = [
   {
-    quote:
-      "Gracias al sistema de auditoría de Altea, demostré mi seniority antes de la entrevista técnica. Pasé de aprendiz a backend en tiempo récord.",
     initials: "DV",
     name: "Daniela Vargas",
-    role: "Desarrolladora Full-Stack · RIWI",
-    userType: "CODER",
+    role: "Frontend Dev · RIWI",
+    quote:
+      "En una sola URL, las empresas vieron mi código ya auditado. Es impresionante.",
   },
   {
-    quote:
-      "Filtramos talentos por métricas auditadas, no por lo que dice su CV. El sello Altea reduce nuestro riesgo de contratación un 40%.",
     initials: "MW",
     name: "Marcus Webb",
     role: "Sr. Recruiter · Stripe",
-    userType: "EMPRESA",
+    quote:
+      "Dejamos de leer PDFs para mirar Altea. La calidad está garantizada por expertos.",
   },
   {
-    quote:
-      "Ver el código real de otros clanes y recibir feedback de líderes técnicos comprimió mi curva de aprendizaje de forma exponencial.",
     initials: "SC",
     name: "Sofía Chen",
-    role: "Frontend Dev · Mentor Cohorte",
-    userType: "CODER",
+    role: "Software Lead · Uber",
+    quote:
+      "La sinergia entre clanes es oro puro. Es una red social con esteroides técnicos.",
   },
 ];
 
 function renderHeader() {
   return `
-    <header class="sticky top-0 z-50 w-full border-b border-[#1F2430]/60 bg-[#0B0E14]/80 backdrop-blur-xl">
-      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <a href="/" class="flex-shrink-0 transition-transform active:scale-95" data-nav>
+    <header class="sticky top-0 z-50 w-full border-b border-white/5 bg-[#0B0E14]/70 backdrop-blur-lg">
+      <div class="mx-auto flex h-14 sm:h-16 max-w-[1400px] items-center justify-between px-6 xl:px-10">
+        <a href="/" class="flex-shrink-0" data-nav>
           <img src="${horizontalLogoNegative}" alt="Altea" class="h-10 sm:h-10 w-auto" />
         </a>
         <div class="flex items-center gap-6">
-          <a href="/login" class="text-[10px] font-bold text-[#9CA3AF] hover:text-[#FFFFFF] transition-colors tracking-widest uppercase">Identificarse</a>
-          <a ${recruiterAction} class="hidden sm:inline-flex px-5 py-2 rounded-lg bg-[#8044F0] text-white text-[10px] font-black tracking-widest hover:bg-[#9A6AF5] transition-all uppercase shadow-lg shadow-[#8044F0]/20">
-            SOLICITAR ACCESO
+          <a href="/login" class="text-[10px] font-bold text-text-secondary hover:text-white transition-all tracking-widest uppercase hidden sm:block">Login</a>
+          <a ${recruiterAction} class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-white text-bg-primary text-[10px] font-black tracking-widest hover:bg-[#8044F0] hover:text-white transition-all uppercase shadow-lg shadow-white/5 active:scale-95">
+            Empresas
           </a>
         </div>
       </div>
@@ -121,69 +86,87 @@ function renderHeader() {
 
 function renderHero() {
   return `
-    <section class="relative px-6 py-24 sm:py-32 lg:py-40 text-center overflow-hidden">
-      <!-- Decoración Aura -->
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[500px] bg-[#8044F0]/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <section class="relative px-6 py-20 sm:py-28 lg:py-32 xl:py-40 text-center overflow-hidden">
+      <!-- Glow Adaptativo -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[250px] sm:h-[400px] bg-[#8044F0]/10 rounded-full blur-[120px] pointer-events-none opacity-70"></div>
 
-      <div class="relative z-10 mx-auto flex max-w-5xl flex-col items-center">
-        <div class="animate-in fade-in zoom-in duration-700">
-           ${Badge({ text: "Sello de Garantía Técnica: Conocimiento Verificado", variant: "primary", icon: `<img src="${iconBolt}" class="h-3 w-3"/>` })}
+      <div class="relative z-10 mx-auto flex max-w-[1200px] flex-col items-center">
+        <div class="mb-5">
+           <span class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#161B26]/80 border border-white/5 text-[9px] font-black text-brand-primary tracking-[0.25em] uppercase italic">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse"></span> Sistema de Validación Técnica
+           </span>
         </div>
 
-        <h1 class="mt-8 font-heading text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.05] text-white tracking-tighter uppercase mb-6">
-          Cualquiera tiene código. <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#8044F0] to-[#4F46E5]">Tú tienes Altea.</span>
+        <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl xl:text-8xl font-black leading-[1.1] text-white tracking-tighter uppercase mb-6 drop-shadow-sm">
+          Conocimiento <br class="hidden sm:block" /> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-[#9A6AF5] to-indigo-400 italic">Certificado.</span>
         </h1>
 
-        <p class="max-w-2xl text-sm sm:text-lg text-[#9CA3AF] font-medium leading-relaxed mb-10 opacity-90 px-4">
-          La infraestructura de auditoría profesional donde tu conocimiento académico se convierte en un activo de empleo verificado y certificado por expertos.
+        <p class="max-w-xl text-xs sm:text-sm lg:text-base text-text-secondary font-medium leading-relaxed mb-10 opacity-70 font-body px-2 sm:px-0">
+          La primera infraestructura donde el talento no se presume: se demuestra ante líderes senior para crear una identidad profesional verificable.
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <a ${recruiterAction} class="flex items-center gap-3 px-8 py-3.5 bg-text-primary text-bg-primary text-[11px] font-black rounded-xl hover:scale-105 transition-all shadow-xl active:scale-95 uppercase tracking-widest">
+        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-[280px] sm:max-w-none justify-center">
+          <a ${recruiterAction} class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-brand-primary text-white text-[10px] font-black rounded-xl hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-primary/15 tracking-[0.1em] uppercase group">
             Soy Reclutador 
-            <img src="${rightArrow}" alt="" class="h-3 w-3" />
+            <img src="${rightArrow}" class="h-3 w-3 group-hover:translate-x-1 transition-transform" />
           </a>
-          <button class="px-8 py-3.5 bg-white/[0.03] border border-[#1F2430] text-[#FFFFFF] text-[11px] font-black rounded-xl hover:bg-white/[0.07] transition-all tracking-widest uppercase">
-             Ver Ledger de Proyectos
+          <button class="px-8 py-3.5 bg-white/5 border border-border-default backdrop-blur-sm text-text-primary text-[10px] font-black rounded-xl hover:bg-white/10 hover:border-brand-primary/30 transition-all tracking-[0.1em] uppercase">
+             Directorio de Talento
           </button>
         </div>
 
-        <div class="mt-20 flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-30">
-          <span class="font-black text-[10px] tracking-widest italic grayscale hover:grayscale-0 transition-all cursor-default uppercase">Github</span>
-          <span class="font-black text-[10px] tracking-widest italic grayscale hover:grayscale-0 transition-all cursor-default uppercase">Riwi.io</span>
-          <span class="font-black text-[10px] tracking-widest italic grayscale hover:grayscale-0 transition-all cursor-default uppercase">Aws Cloud</span>
-          <span class="font-black text-[10px] tracking-widest italic grayscale hover:grayscale-0 transition-all cursor-default uppercase">Postgresql</span>
+              <div class="mt-16 sm:mt-24 flex flex-wrap justify-center gap-6 sm:gap-12 opacity-30 filter grayscale hover:opacity-50 transition-opacity duration-700">
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              AUDIT PROTOCOL v.1
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default text-brand-primary opacity-80">
+              RIWI BARRANQUILLA
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              Saas INFRASTRUCTURE
+          </span>
+          <span class="font-black text-[10px] sm:text-[12px] tracking-[0.4em] uppercase italic cursor-default">
+              TECHNICAL LEDGER
+          </span>
         </div>
       </div>
     </section>
   `;
 }
 
-function renderHowItWorks() {
+function renderFeatures() {
   return `
-    <section class="bg-[#161B26]/30 border-y border-[#1F2430] px-6 py-28 backdrop-blur-3xl">
-      <div class="mx-auto max-w-7xl">
-        <div class="text-center mb-16 space-y-3">
-           <p class="text-[10px] font-black text-[#8044F0] uppercase tracking-[0.4em] italic">Infraestructura</p>
-           <h2 class="font-heading text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase italic">De Aula al <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#8044F0] to-[#FFFFFF]">Mercado.</span></h2>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-            ${steps
-              .map(
-                (step) => `
-                <div class="flex flex-col p-8 rounded-3xl bg-[#161B26]/40 border border-[#1F2430] hover:border-[#8044F0]/30 transition-all duration-500 group">
-                    <span class="text-4xl font-black text-[#8044F0]/10 mb-4 group-hover:text-[#8044F0]/30 transition-colors">${step.number}</span>
-                    ${step.icon}
-                    <h3 class="mt-6 text-sm font-black text-white uppercase tracking-widest">${step.title}</h3>
-                    <p class="mt-4 text-[13px] text-[#9CA3AF] font-medium leading-relaxed">${step.description}</p>
-                    <ul class="mt-6 space-y-2">
-                        ${step.checklist.map((item) => `<li class="flex items-center gap-2 text-[10px] font-bold text-[#8044F0]/80"><div class="w-1 h-1 rounded-full bg-[#8044F0]"></div> ${item}</li>`).join("")}
-                    </ul>
-                </div>
-            `,
-              )
-              .join("")}
+    <section class="bg-bg-primary border-y border-white/5 px-6 py-24 sm:py-32">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
+            <div class="text-left space-y-5 animate-in slide-in-from-left duration-1000 px-2 sm:px-0">
+               <div class="flex items-center gap-2 font-black text-[8px] sm:text-[9px] text-brand-primary uppercase tracking-[0.4em]">
+                  <div class="h-px w-6 sm:w-10 bg-brand-primary/40"></div>
+                  Metodología Altea
+               </div>
+               <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tighter leading-none uppercase italic italic">Fábrica de <span class="text-brand-primary opacity-90 underline decoration-white/10 underline-offset-8">Garantía.</span></h2>
+               <p class="text-xs sm:text-sm lg:text-base text-text-secondary font-medium leading-relaxed max-w-md font-body opacity-60 italic italic">
+                  Transformamos proyectos de formación en evidencia de grado profesional lista para contrataciones críticas.
+               </p>
+            </div>
+            
+            <div class="grid gap-4 sm:gap-6">
+                ${steps
+                  .map(
+                    (step) => `
+                    <div class="p-6 sm:p-7 rounded-[28px] bg-bg-secondary/40 border border-white/[0.04] hover:border-brand-primary/30 transition-all duration-500 flex items-center sm:items-start gap-6 group hover:bg-[#161B26]/80">
+                        <div class="w-10 h-10 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#0B0E14] border border-white/10 text-brand-primary shadow-lg shadow-black/20 group-hover:scale-105 transition-transform duration-300">
+                           <img src="${step.icon}" class="w-14 h-14 sm:w-16 sm:h-16 opacity-80" />
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-[10px] sm:text-[11px] font-black text-text-primary uppercase tracking-widest transition-colors">${step.title}</h3>
+                            <p class="text-[11px] sm:text-[12px] text-text-secondary leading-relaxed max-w-[280px] font-medium opacity-60">${step.desc}</p>
+                        </div>
+                    </div>
+                `,
+                  )
+                  .join("")}
+            </div>
         </div>
       </div>
     </section>
@@ -192,80 +175,88 @@ function renderHowItWorks() {
 
 function renderTestimonials() {
   return `
-    <section class="px-6 py-28 relative">
-       <div class="mx-auto max-w-7xl">
-         <div class="mb-20 text-center lg:text-left flex flex-col lg:flex-row items-end justify-between gap-6">
-            <h2 class="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase leading-[0.9]">Confianza <br/> <span class="text-[#8044F0]">Certificada.</span></h2>
-            <p class="text-[#9CA3AF] text-sm max-w-xs font-medium italic opacity-70">Impacto real en desarrolladores y empresas globales.</p>
-         </div>
-         <div class="grid md:grid-cols-3 gap-6 animate-in slide-in-from-bottom duration-1000">
-             ${testimonials
-               .map(
-                 (t) => `
-                <div class="p-8 rounded-[32px] bg-[#161B26]/20 border border-[#1F2430] hover:bg-white/[0.01] transition-all">
-                    <p class="text-sm text-[#FFFFFF] leading-relaxed mb-8 italic opacity-90 font-medium">"${t.quote}"</p>
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-[#8044F0] flex items-center justify-center font-black text-[10px] text-white border-2 border-white/5 shadow-lg shadow-[#8044F0]/10">${t.initials}</div>
-                        <div>
-                            <p class="text-xs font-black text-white uppercase tracking-tight">${t.name}</p>
-                            <p class="text-[9px] font-bold text-[#8044F0] uppercase tracking-widest">${t.role}</p>
-                        </div>
-                    </div>
-                </div>
-             `,
-               )
-               .join("")}
-         </div>
-       </div>
+    <section class="bg-gradient-to-b from-[#161B26]/10 to-transparent px-6 py-24 sm:py-32">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="text-center lg:text-left mb-14 px-2">
+            <h2 class="text-4xl sm:text-5xl font-black text-white tracking-tight uppercase leading-none italic mb-4 italic italic">Confianza. <span class="text-brand-primary">Casos de éxito.</span></h2>
+            <div class="w-10 h-1 bg-brand-primary rounded-full mx-auto lg:mx-0 opacity-40"></div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-6">
+           ${testimonials
+             .map(
+               (t) => `
+               <div class="p-8 sm:p-9 rounded-[35px] bg-[#161B26]/20 border border-white/[0.05] relative group hover:bg-[#1F2430]/30 transition-all hover:translate-y-[-2px]">
+                  <p class="text-[13px] sm:text-sm text-text-primary leading-relaxed italic font-medium opacity-80 relative z-10 font-body mb-10">"${t.quote}"</p>
+                  <div class="flex items-center gap-4 border-t border-white/5 pt-7 relative z-10">
+                     <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-indigo-600 flex items-center justify-center font-black text-[9px] text-white shadow-xl shadow-brand-primary/10">${t.initials}</div>
+                     <div class="flex flex-col">
+                        <span class="text-[11px] font-black text-white tracking-tight uppercase font-heading group-hover:text-brand-primary transition-colors">${t.name}</span>
+                        <span class="text-[8px] font-black text-brand-primary tracking-widest italic opacity-60 uppercase">${t.role}</span>
+                     </div>
+                  </div>
+                  <div class="absolute top-6 right-8 text-[32px] font-black text-brand-primary opacity-5 italic select-none">”</div>
+               </div>
+           `,
+             )
+             .join("")}
+        </div>
+      </div>
     </section>
   `;
 }
 
 function renderFinalCTA() {
   return `
-    <section class="px-6 py-20 pb-32">
-       <div class="mx-auto max-w-4xl rounded-[40px] bg-gradient-to-br from-[#1F2430] to-[#0B0E14] border-2 border-white/5 p-12 lg:p-24 text-center relative overflow-hidden shadow-2xl">
-            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-[#8044F0]/5 rounded-full blur-[100px]"></div>
-            
-            <h2 class="text-4xl lg:text-6xl font-black text-white uppercase tracking-tighter mb-8 leading-none italic italic">La Identidad IT<br/> <span class="text-[#8044F0]">del Futuro.</span></h2>
-            <p class="text-[#9CA3AF] text-base mb-12 max-w-xl mx-auto italic opacity-70">Los reclutadores de primer nivel ya están en el Ledger de Altea. ¿Listo para elevar el perfil de tu empresa?</p>
-            
-            <div class="flex flex-col sm:flex-row gap-5 justify-center items-center">
-              <a ${recruiterAction} class="inline-flex px-12 py-4 bg-[#8044F0] text-white text-[11px] font-black rounded-xl tracking-widest uppercase hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#8044F0]/10">
-                 CONECTAR EMPRESA
+    <section class="px-6 py-24 sm:py-40">
+      <div class="mx-auto max-w-[1100px] rounded-[45px] bg-[#161B26] border border-white/[0.04] p-10 lg:p-20 relative overflow-hidden shadow-2xl shadow-black/40">
+          <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+          
+          <div class="relative z-10 text-center space-y-6 sm:space-y-8">
+            <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-tight italic">Acceso Privado a la <span class="text-brand-primary underline decoration-brand-primary/10 underline-offset-[12px]">Elite Técnica.</span></h2>
+            <p class="text-xs sm:text-base text-text-secondary font-medium max-w-md mx-auto opacity-70 italic font-body">
+                Reclutadores filtran talento auditado bajo estándares industriales en Barranquilla y para el mundo.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-5 justify-center items-center pt-4">
+              <a ${recruiterAction} class="inline-flex px-10 py-4 bg-brand-primary text-white text-[10px] font-black rounded-xl tracking-widest uppercase hover:bg-brand-hover hover:scale-105 active:scale-95 transition-all shadow-xl shadow-brand-primary/20 italic">
+                Solicitar Conexión
               </a>
-              <a href="/login" class="text-[10px] font-black text-[#9CA3AF] hover:text-white transition-colors tracking-widest uppercase italic border-b-2 border-transparent hover:border-[#8044F0]">Solo acceso certificado →</a>
             </div>
-       </div>
+          </div>
+      </div>
     </section>
   `;
 }
 
 function renderFooter() {
   return `
-    <footer class="bg-bg-primary px-6 py-20 border-t border-[#1F2430]">
-      <div class="mx-auto max-w-7xl">
-        <div class="flex flex-col lg:flex-row justify-between items-center gap-12 border-b border-[#1F2430] pb-20">
-            <div class="space-y-4 max-w-sm text-center lg:text-left">
-                <img src="${horizontalLogoNegative}" alt="Altea" class="h-12 grayscale brightness-200 mx-auto lg:mx-0" />
-                <p class="text-[11px] font-semibold text-[#6B7280] tracking-tight">Forjando la transparencia técnica. Ecosistema de validación diseñado en Barranquilla, Co. para el escalafón global.</p>
+    <footer class="bg-bg-primary px-6 py-14 border-t border-white/5 font-body">
+      <div class="mx-auto max-w-[1200px]">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-12 pb-16 px-4">
+            <div class="space-y-4">
+                <img src="${horizontalLogoNegative}" alt="Altea" class="h-6 sm:h-7 opacity-30 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-700" />
+                <p class="text-[10px] font-bold text-text-tertiary tracking-[0.2em] max-w-[240px] uppercase leading-tight italic">Vinculación de talento por RIWI Academy.</p>
             </div>
-            <div class="flex items-center gap-8">
-                <div class="flex gap-4">
-                  <a href="#" class="p-2 bg-white/5 rounded-lg hover:bg-[#8044F0]/20 transition-all opacity-60 hover:opacity-100">
-                    <img src="${LinkedIn}" alt="" class="h-4 w-4 grayscale" />
-                  </a>
-                  <a href="#" class="p-2 bg-white/5 rounded-lg hover:bg-[#8044F0]/20 transition-all opacity-60 hover:opacity-100">
-                    <img src="${Gmail}" alt="" class="h-4 w-4 grayscale" />
-                  </a>
+            
+            <div class="grid grid-cols-2 gap-12 sm:gap-20 text-[9px] font-black tracking-[0.25em] text-text-tertiary uppercase">
+                <div class="flex flex-col gap-5">
+                    <span class="text-white opacity-20 italic">Ledger</span>
+                    <a href="#" class="hover:text-brand-primary transition-all">Auditados</a>
+                    <a href="#" class="hover:text-brand-primary transition-all">Clanes IT</a>
+                </div>
+                <div class="flex flex-col gap-5">
+                    <span class="text-white opacity-20 italic">Oficial</span>
+                    <a href="#" class="hover:text-brand-primary transition-all">Protocolo</a>
+                    <a href="#" class="hover:text-brand-primary transition-all">Seguridad</a>
                 </div>
             </div>
         </div>
-        <div class="pt-10 flex flex-col md:flex-row justify-between items-center text-[9px] font-black text-[#6B7280] tracking-[0.2em] uppercase">
-            <span>© ${new Date().getFullYear()} ALTEA · VINCULACIÓN ACADÉMICA RIWI</span>
-            <div class="flex gap-8 mt-6 md:mt-0">
-               <a href="#" class="hover:text-[#8044F0] transition-colors underline-offset-4 underline italic">Terminos Legales</a>
-               <a href="#" class="hover:text-[#8044F0] transition-colors underline-offset-4 underline italic">Protocolos</a>
+
+        <div class="pt-10 flex flex-col md:flex-row justify-between items-center border-t border-white/[0.03] text-[8px] font-black text-text-tertiary tracking-[0.35em] uppercase italic opacity-40">
+            <span>© ${new Date().getFullYear()} ALTEA · EL PRÓXIMO ESCALAFÓN TÉCNICO</span>
+            <div class="flex gap-6 mt-5 sm:mt-0 grayscale">
+                  <a href="#"><img src="${LinkedIn}" class="w-3.5 h-3.5"/></a>
+                  <a href="#"><img src="${Gmail}" class="w-3.5 h-3.5"/></a>
             </div>
         </div>
       </div>
@@ -275,11 +266,11 @@ function renderFooter() {
 
 export function LandingView() {
   return `
-    <div class="bg-[#0B0E14] text-white selection:bg-[#8044F0]/40 overflow-hidden font-body antialiased">
+    <div class="bg-bg-primary text-white selection:bg-brand-primary/50 font-body antialiased overflow-x-hidden min-h-screen">
       ${renderHeader()}
-      <main class="animate-in fade-in duration-700">
+      <main class="animate-in fade-in zoom-in-95 duration-700 ease-out">
         ${renderHero()}
-        ${renderHowItWorks()}
+        ${renderFeatures()}
         ${renderTestimonials()}
         ${renderFinalCTA()}
       </main>
