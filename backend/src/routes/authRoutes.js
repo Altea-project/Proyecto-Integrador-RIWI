@@ -11,6 +11,7 @@ const { login, getCurrentUser } = require("../controllers/authController");
 const {
   registerUser,
   assignTl,
+  getAllUsers,
   getMyProfile,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
@@ -41,6 +42,7 @@ router.post("/users", verifyToken, requireRole("admin"), registerUser);
 // (CA-03): no existe ningún PATCH/PUT que permita al coder cambiar su
 // propio availability_status.
 router.get("/users/me", verifyToken, getMyProfile);
+router.get("/users", verifyToken, requireRole("admin"), getAllUsers);
 
 // PATCH /users/:id/assign-tl — HU-01 (issues #65 y #66): asigna un TL
 // (instructor) a un usuario. Solo un admin autenticado. El service valida
