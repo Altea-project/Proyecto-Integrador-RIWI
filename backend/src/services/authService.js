@@ -16,6 +16,7 @@ const {
   findRoleByName,
   createUser,
   findUserById,
+  findUserProfileById,
   updateUserTl,
 } = require("../repositories/authRepository");
 const { generateToken } = require("../utils/jwt");
@@ -228,6 +229,50 @@ async function getCurrentUser(userId) {
 }
 
 /**
+ * Arma el perfil completo del usuario autenticado (T2 de la HU de
+ * disponibilidad): a diferencia de getCurrentUser (usado en GET /me
+ * para reconstruir la sesión), este perfil incluye los campos propios
+ * de un coder -- en especial availability_status, que alimenta el
+ * badge del dashboard (CA-01: verde "Disponible" / amarillo "En
+ * conversaciones" / gris "No disponible").
+ *
+ * Es de solo lectura: este endpoint no expone ninguna forma de que el
+ * propio usuario cambie su availability_status (CA-03) -- ese cambio
+ * solo lo puede hacer un TL o un admin desde otro endpoint (fuera del
+ * alcance de T2), y el coder solo lo ve reflejado al recargar (CA-02).
+ *
+ * @param {number} userId - Id del usuario autenticado (req.user.id).
+ * @returns {Promise<Object>} Perfil público del usuario, incluyendo availabilityStatus.
+ * @throws {UserNotFoundError} Si el id no corresponde a ningún usuario.
+ */
+async function getMyProfile(userId) {
+  const user = await findUserProfileById(userId);
+
+  if (!user) {
+    throw new UserNotFoundError("Usuario no encontrado");
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    document: user.document,
+    company: user.company,
+    roleId: user.role_id,
+    roleName: user.role_name,
+    tlId: user.tl_id,
+    tlName: user.tl_name,
+    avatarUrl: user.avatar_url,
+    availabilityStatus: user.availability_status,
+    statusChangedAt: user.status_changed_at,
+    mustChangePassword: user.must_change_password,
+    createdAt: user.created_at,
+    updatedAt: user.updated_at,
+  };
+}
+
+/**
  * Asigna un TL (team leader) a un usuario. Es la HU-01:
  *   - T1 (issue #65): valida que el TL destino exista y tenga rol "instructor".
  *   - T2 (issue #66): guarda la asignacion actualizando tl_id en la tabla users.
@@ -272,6 +317,7 @@ module.exports = {
   login,
   registerUser,
   getCurrentUser,
+  getMyProfile,
   InvalidCredentialsError,
   RoleNotFoundError,
   EmailAlreadyExistsError,

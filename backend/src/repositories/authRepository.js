@@ -126,10 +126,43 @@ async function createUser(user) {
   return rows[0];
 }
 
+/**
+ * Busca el perfil completo de un usuario por su id, incluyendo los
+ * campos propios de un coder (availability_status, avatar_url, tl_id)
+ * y el nombre de su TL (si tiene uno asignado).
+ * Se usa en GET /users/me (T2) para que el propio usuario autenticado
+ * pueda ver su estado de disponibilidad (badge del dashboard, CA-01),
+ * el cual es de solo lectura desde este endpoint (CA-03: no existe
+ * ningún endpoint que permita al coder modificar su propio estado).
+ *
+ * Se hace LEFT JOIN con users (alias tl) porque tl_id puede ser NULL
+ * (un coder recién creado puede no tener TL asignado todavía).
+ *
+ * @param {number} id - Id del usuario autenticado (viene de req.user.id).
+ * @returns {Promise<Object|undefined>} El perfil encontrado, o undefined si no existe.
+ */
+async function findUserProfileById(id) {
+  const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
+            u.role_id, r.name AS role_name,
+            u.tl_id, tl.name AS tl_name,
+            u.avatar_url, u.availability_status,
+            u.status_changed_at, u.must_change_password,
+            u.created_at, u.updated_at
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        LEFT JOIN users tl ON u.tl_id = tl.id
+        WHERE u.id = $1`,
+    [id],
+  );
+  return rows[0];
+}
+
 module.exports = {
   findUserByEmail,
   findUserByDocument,
   findRoleByName,
   createUser,
   findUserById,
+  findUserProfileById,
 };
