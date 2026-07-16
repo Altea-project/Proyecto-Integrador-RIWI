@@ -31,6 +31,16 @@ router.get("/me", verifyToken, getCurrentUser);
 // exista y que el email/document no estén ya registrados antes de
 // insertar (ver authService.registerUser).
 router.post("/users", verifyToken, requireRole("admin"), registerUser);
+
+// GET /users/me — T2: retorna el perfil completo del usuario autenticado
+// (coder, instructor, admin o recruiter), incluido availability_status.
+// Alimenta el badge de disponibilidad del dashboard del coder (CA-01).
+// Solo requiere estar autenticado (verifyToken); no tiene restricción
+// de rol porque cada usuario solo puede ver SU PROPIO perfil (el id
+// sale de req.user, nunca de la URL ni del body) y es de solo lectura
+// (CA-03): no existe ningún PATCH/PUT que permita al coder cambiar su
+// propio availability_status.
+router.get("/users/me", verifyToken, getMyProfile);
 router.get("/users", verifyToken, requireRole("admin"), getAllUsers);
 
 // PATCH /users/:id/assign-tl — HU-01 (issues #65 y #66): asigna un TL
