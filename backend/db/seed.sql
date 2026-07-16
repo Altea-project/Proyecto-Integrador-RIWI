@@ -37,7 +37,7 @@ INSERT INTO users (name, email, password_hash, document, role_id, must_change_pa
 VALUES
     (
     'Instructor Prueba',
-    'instructor@altea.com',
+    'proyecto.altea.riwi@gmail.com',
     '$2b$10$1SGV0D1FMD4ps9p2POl3W.g8iumWwD7frOzuvS2gq/eWoKz9R99sO',
     'DOC-INSTRUCTOR-001',
     (SELECT id FROM roles WHERE name = 'instructor'),
