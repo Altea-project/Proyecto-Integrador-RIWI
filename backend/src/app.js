@@ -12,6 +12,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
 const projectRoutes = require('./routes/projectRoutes'); // POST /projects: coder sube su proyecto
+const interestRoutes = require('./routes/interestRoutes'); // POST /interests: reclutador muestra interés en un proyecto
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.bo
 app.use('/api', authRoutes);
 app.use('/api', passwordRoutes); // PATCH /api/change-password
 app.use('/api', projectRoutes); // POST /api/projects
+app.use('/api/interests', interestRoutes); // POST /api/interests
 
 // Ruta de salud simple, útil para confirmar que el servidor responde
 // antes de probar rutas más complejas.

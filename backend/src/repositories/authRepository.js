@@ -26,17 +26,17 @@ async function findUserByEmail(email) {
   // Esto permite que el JWT lleve roleName y la autorización se haga por
   // nombre en vez de por ID hardcodeado (más robusto ante reordenamientos
   // del seed o diferencias entre entornos).
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.password_hash, u.role_id, u.must_change_password, r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.email = $1`,
     [email],
-  );
+    );
 
   // rows[0] es undefined si no hay coincidencias; el service decide
   // qué hacer con eso (lanzar InvalidCredentialsError).
-  return rows[0];
+    return rows[0];
 }
 
 /**
@@ -50,35 +50,14 @@ async function findUserByEmail(email) {
  * @returns {Promise<Object|undefined>} El usuario encontrado, o undefined si no existe.
  */
 async function findUserById(id) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.role_id, u.must_change_password, r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.id = $1`,
     [id],
-  );
-  return rows[0];
-}
-
-/**
- * Trae el listado completo de usuarios, con su rol y su TL asignado (si tiene).
- * Se usa en GET /users (admin) para poblar la tabla del Dashboard.
- *
- * @returns {Promise<Array>} Lista de usuarios con role_name, tl_id y tl_name.
- */
-async function findAllUsers() {
-  const { rows } = await pool.query(
-    `SELECT
-        u.id, u.name, u.email, u.phone, u.document, u.company,
-        u.role_id, r.name as role_name,
-        u.tl_id, tl.name as tl_name,
-        u.must_change_password, u.created_at
-      FROM users u
-      JOIN roles r ON u.role_id = r.id
-      LEFT JOIN users tl ON u.tl_id = tl.id
-      ORDER BY u.created_at DESC`,
-  );
-  return rows;
+    );
+    return rows[0];
 }
 
 /**
@@ -90,11 +69,11 @@ async function findAllUsers() {
  * @returns {Promise<Object|undefined>} { id } si existe, undefined si no.
  */
 async function findUserByDocument(document) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT id FROM users WHERE document = $1`,
     [document],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -106,11 +85,11 @@ async function findUserByDocument(document) {
  * @returns {Promise<Object|undefined>} { id, name } si existe, undefined si no.
  */
 async function findRoleByName(name) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT id, name FROM roles WHERE name = $1`,
     [name],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -130,21 +109,21 @@ async function findRoleByName(name) {
  * @returns {Promise<Object>} El usuario recién creado (sin password_hash).
  */
 async function createUser(user) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `INSERT INTO users (name, email, password_hash, phone, document, company, role_id, must_change_password)
         VALUES ($1, $2, $3, $4, $5, $6, $7, true)
         RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at`,
     [
-      user.name,
-      user.email,
-      user.passwordHash,
-      user.phone || null,
-      user.document || null,
-      user.company || null,
-      user.roleId,
+        user.name,
+        user.email,
+        user.passwordHash,
+        user.phone || null,
+        user.document || null,
+        user.company || null,
+        user.roleId,
     ],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 /**
@@ -163,7 +142,7 @@ async function createUser(user) {
  * @returns {Promise<Object|undefined>} El perfil encontrado, o undefined si no existe.
  */
 async function findUserProfileById(id) {
-  const { rows } = await pool.query(
+    const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
             u.role_id, r.name AS role_name,
             u.tl_id, tl.name AS tl_name,
@@ -175,34 +154,15 @@ async function findUserProfileById(id) {
         LEFT JOIN users tl ON u.tl_id = tl.id
         WHERE u.id = $1`,
     [id],
-  );
-  return rows[0];
-}
-
-/**
- * Actualiza el tl_id de un usuario (le asigna un Team Leader).
- * Se usa en PATCH /users/:id/assign-tl.
- *
- * @param {number} userId - Id del usuario (coder) al que se le asigna el TL.
- * @param {number} tlId - Id del instructor asignado como TL.
- * @returns {Promise<Object>} El usuario actualizado.
- */
-async function updateUserTl(userId, tlId) {
-  const { rows } = await pool.query(
-    `UPDATE users SET tl_id = $1 WHERE id = $2
-     RETURNING id, name, email, role_id, tl_id`,
-    [tlId, userId],
-  );
-  return rows[0];
+    );
+    return rows[0];
 }
 
 module.exports = {
-  findUserByEmail,
-  findUserByDocument,
-  findRoleByName,
-  createUser,
-  findUserById,
-  findUserProfileById,
-  findAllUsers,
-  updateUserTl,
+    findUserByEmail,
+    findUserByDocument,
+    findRoleByName,
+    createUser,
+    findUserById,
+    findUserProfileById,
 };
