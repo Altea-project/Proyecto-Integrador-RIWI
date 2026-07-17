@@ -12,6 +12,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const passwordRoutes = require('./routes/passwordRoutes'); // T5: cambio de contraseña
 const projectRoutes = require('./routes/projectRoutes'); // POST /projects: coder sube su proyecto
+const getProjectsRoutes = require('./routes/getProjectsRoutes'); // HU-12 · T1: GET /projects (galería)
 const interestRoutes = require('./routes/interestRoutes'); // POST /interests: reclutador muestra interés en un proyecto
 const gradingRoutes = require('./routes/gradingRoutes'); // HU-06: POST /gradings, PATCH /gradings/:id
 const coderRoutes = require('./routes/coderRoutes');
@@ -28,6 +29,7 @@ app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.bo
 app.use('/api', authRoutes);
 app.use('/api', passwordRoutes); // PATCH /api/change-password
 app.use('/api', projectRoutes); // POST /api/projects
+app.use('/api', getProjectsRoutes); // GET /api/projects (HU-12 · T1: galería)
 app.use('/api/interests', interestRoutes); // POST /api/interests
 app.use('/api', gradingRoutes); // POST /api/gradings, PATCH /api/gradings/:id
 app.use('/api/coders', coderRoutes); // GET /api/coders/search
