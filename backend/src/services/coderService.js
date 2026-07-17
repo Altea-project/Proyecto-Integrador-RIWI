@@ -9,6 +9,10 @@ const coderRepository = require('../repositories/coderRepository');
 // controller no tenga que interpretar mensajes de texto.
 class InvalidSkillsError extends Error {}
 
+// HU-13 · T1 — error de dominio para cuando el :id no corresponde
+// a ningún coder existente.
+class CoderNotFoundError extends Error {}
+
 // ------------------------------------------------------------
 // HU-08 · T1 — Recibe el string "1,2,3" que llega por query,
 // lo valida y lo convierte a un array de enteros antes de
@@ -31,4 +35,29 @@ async function searchCoders(skillsParam) {
     return coderRepository.searchBySkills(skillIds);
 }
 
-module.exports = { searchCoders, InvalidSkillsError };
+// ------------------------------------------------------------
+// HU-13 · T1 — Arma el perfil público del coder combinando las
+// 3 consultas del repository en un solo objeto de respuesta.
+// No hay transacción porque son 3 lecturas independientes; si
+// una fallara no hay nada que "revertir" en las otras dos.
+// ------------------------------------------------------------
+async function getCoderProfile(coderId) {
+    const id = parseInt(coderId, 10);
+    if (Number.isNaN(id)) {
+    throw new CoderNotFoundError('Id de coder inválido.');
+    }
+
+    const coder = await coderRepository.findCoderById(id);
+    if (!coder) {
+    throw new CoderNotFoundError('Coder no encontrado.');
+    }
+
+    const [skills, projects] = await Promise.all([
+    coderRepository.findSkillsByCoderId(id),
+    coderRepository.findProjectsByCoderId(id)
+    ]);
+
+    return { ...coder, skills, projects };
+}
+
+module.exports = { searchCoders, getCoderProfile, InvalidSkillsError, CoderNotFoundError };
