@@ -180,99 +180,38 @@ async function getMyProfile(req, res, next) {
 }
 
 /**
- * PATCH /users/:id/status
- *
- * Cambia el estado de disponibilidad de un usuario.
+ * PATCH /users/:id/status — HU-11
+ * Cambia el estado de disponibilidad de un usuario. La ruta ya exige rol
+ * admin o instructor; el service hace la validacion fina (que el
+ * instructor sea el TL de ese coder). Body: { status }.
  */
 async function updateStatus(req, res, next) {
-  try {
-    const targetUserId = Number(req.params.id);
-    const { status } = req.body || {};
+    try {
+        const targetUserId = Number(req.params.id);
+        const { status } = req.body || {};
 
-    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: "El id del usuario no es válido",
-      });
+        if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El id del usuario no es válido",
+            });
+        }
+
+        const user = await authService.changeAvailabilityStatus(req.user, targetUserId, status);
+
+        return res.status(200).json({ success: true, data: { user } });
+    } catch (error) {
+        if (error instanceof authService.InvalidStatusError) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
+        if (error instanceof authService.UserNotFoundError) {
+            return res.status(404).json({ success: false, error: error.message });
+        }
+        if (error instanceof authService.ForbiddenStatusError) {
+            return res.status(403).json({ success: false, error: error.message });
+        }
+        next(error);
     }
-
-    const user = await authService.changeAvailabilityStatus(
-      req.user,
-      targetUserId,
-      status,
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: { user },
-    });
-  } catch (error) {
-    if (error instanceof authService.InvalidStatusError) {
-      return res.status(400).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    if (error instanceof authService.UserNotFoundError) {
-      return res.status(404).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    if (error instanceof authService.ForbiddenStatusError) {
-      return res.status(403).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    next(error);
-  }
 }
 
-/**
- * GET /users/:id/public
- *
- * Perfil público de un coder: visible para cualquier usuario
- * autenticado.
- */
-async function getPublicProfile(req, res, next) {
-  try {
-    const userId = Number(req.params.id);
-    const user = await authService.getMyProfile(userId);
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          roleName: user.roleName,
-          avatarUrl: user.avatarUrl,
-          availabilityStatus: user.availabilityStatus,
-          tlName: user.tlName,
-        },
-      },
-    });
-  } catch (error) {
-    if (error instanceof authService.UserNotFoundError) {
-      return res.status(404).json({
-        success: false,
-        error: error.message,
-      });
-    }
-
-    next(error);
-  }
-}
-
-module.exports = {
-  registerUser,
-  assignTl,
-  getMyProfile,
-  getAllUsers,
-  updateStatus,
-  getPublicProfile,
-};
+module.exports = { registerUser, assignTl, getMyProfile, getAllUsers, updateStatus };

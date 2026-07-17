@@ -87,24 +87,7 @@ async function createProjectWithSkills(project, skillIds = []) {
   }
 }
 
-async function findProjectsByCoderId(coderId) {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, coder_id, title, description, image_url, repo_url, is_external, created_at, updated_at
-       FROM projects
-       WHERE coder_id = $1
-       ORDER BY created_at DESC`,
-      [coderId],
-    );
-    return rows;
-  } catch (error) {
-    console.error("ERROR REAL DE LA QUERY:", error.message);
-    throw error;
-  }
-}
-
 module.exports = {
   findSkillsByIds,
   createProjectWithSkills,
-  findProjectsByCoderId,
 };

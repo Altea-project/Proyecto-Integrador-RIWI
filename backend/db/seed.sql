@@ -123,3 +123,44 @@ VALUES
     false
     )
 ON CONFLICT (project_id) DO NOTHING;
+
+-- ------------------------------------------------------------
+-- HU-13 · T1 — Tecnologías de prueba para el detalle de proyecto
+-- (GET /projects/:id). "skills" sí tiene UNIQUE en name, por eso
+-- ON CONFLICT (name) DO NOTHING es idempotente.
+-- ------------------------------------------------------------
+INSERT INTO skills (name)
+VALUES
+    ('Node.js'),
+    ('Express'),
+    ('PostgreSQL'),
+    ('JavaScript'),
+    ('HTML/CSS')
+ON CONFLICT (name) DO NOTHING;
+
+-- Relación N:M proyecto-tecnología. "Portafolio Personal" se deja
+-- sin tecnologías a propósito, para comprobar que el detalle
+-- responde `skills: []` (y no un error) cuando no hay ninguna.
+INSERT INTO project_skills (project_id, skill_id)
+VALUES
+    (
+    (SELECT id FROM projects WHERE title = 'Altea Gallery'),
+    (SELECT id FROM skills WHERE name = 'Node.js')
+    ),
+    (
+    (SELECT id FROM projects WHERE title = 'Altea Gallery'),
+    (SELECT id FROM skills WHERE name = 'Express')
+    ),
+    (
+    (SELECT id FROM projects WHERE title = 'Altea Gallery'),
+    (SELECT id FROM skills WHERE name = 'PostgreSQL')
+    ),
+    (
+    (SELECT id FROM projects WHERE title = 'Task Manager API'),
+    (SELECT id FROM skills WHERE name = 'Node.js')
+    ),
+    (
+    (SELECT id FROM projects WHERE title = 'Task Manager API'),
+    (SELECT id FROM skills WHERE name = 'JavaScript')
+    )
+ON CONFLICT (project_id, skill_id) DO NOTHING;

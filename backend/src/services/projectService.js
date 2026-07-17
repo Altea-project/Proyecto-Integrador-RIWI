@@ -10,7 +10,6 @@
 const {
   createProjectWithSkills,
   findSkillsByIds,
-  findProjectsByCoderId,
 } = require("../repositories/projectRepository");
 
 /**
@@ -85,12 +84,7 @@ async function createProjectForCoder(coderId, data) {
   };
 }
 
-async function getMyProjects(coderId) {
-  return await findProjectsByCoderId(coderId);
-}
-
 module.exports = {
   createProjectForCoder,
   InvalidSkillsError,
-  getMyProjects,
 };

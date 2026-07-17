@@ -88,24 +88,4 @@ async function createProject(req, res, next) {
   }
 }
 
-async function getMyProjects(req, res, next) {
-  try {
-    const coderId = req.user.id;
-    const projects = await projectService.getMyProjects(coderId);
-    return res.status(200).json({ success: true, data: { projects } });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function getProjectsByUserId(req, res, next) {
-  try {
-    const coderId = Number(req.params.id);
-    const projects = await projectService.getMyProjects(coderId); // misma función, distinto id
-    return res.status(200).json({ success: true, data: { projects } });
-  } catch (error) {
-    next(error);
-  }
-}
-
-module.exports = { createProject, getMyProjects, getProjectsByUserId };
+module.exports = { createProject };
