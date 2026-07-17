@@ -10,7 +10,7 @@ export function Header({ extraClasses = "" } = {}) {
 
   const getHomePath = () => {
     if (!user) return "/";
-    if (user.role === ROLES.ADMIN) return "/admin";
+    if (user.roleName === ROLES.ADMIN) return "/admin";
     return "/dashboard";
   };
 
@@ -85,12 +85,12 @@ export function Header({ extraClasses = "" } = {}) {
                   </div>
                   
                   <div class="p-2 space-y-1">
-                    <button type="button" class="group flex w-full items-center gap-3 px-4 py-3 text-xs font-bold text-text-secondary hover:bg-white/[0.03] hover:text-text-primary rounded-xl transition-all">
-                      <div class="p-1.5 rounded-lg bg-[#0B0E14] border border-border-default group-hover:border-[#8044F0]/30">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      </div>
-                      Mi Identidad Pública
-                    </button>
+                    <a href="/profile/${user.id}" data-nav class="group flex w-full items-center gap-3 px-4 py-3 text-xs font-bold text-text-secondary hover:bg-white/[0.03] hover:text-text-primary rounded-xl transition-all">
+                    <div class="p-1.5 rounded-lg bg-[#0B0E14] border border-border-default group-hover:border-[#8044F0]/30">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    Mi Identidad Pública
+                  </a>
                     
                     <div class="mx-4 my-2 h-px bg-border-default/40"></div>
 

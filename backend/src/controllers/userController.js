@@ -179,4 +179,48 @@ async function getMyProfile(req, res, next) {
   }
 }
 
-module.exports = { registerUser, assignTl, getMyProfile, getAllUsers };
+/**
+ * GET /users/:id/public
+ *
+ * Perfil público de un coder: visible para cualquier usuario
+ * autenticado (reclutadores, otros coders, admin, etc.), con datos
+ * filtrados (sin phone, document, ni mustChangePassword).
+ *
+ * Respuestas:
+ * - 200: -> { success: true, data: { user } }
+ * - 404: el usuario :id no existe
+ * - 500: error inesperado -> manejador central
+ */
+async function getPublicProfile(req, res, next) {
+  try {
+    const userId = Number(req.params.id);
+    const user = await authService.getMyProfile(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          roleName: user.roleName,
+          avatarUrl: user.avatarUrl,
+          availabilityStatus: user.availabilityStatus,
+          tlName: user.tlName,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+module.exports = {
+  registerUser,
+  assignTl,
+  getMyProfile,
+  getAllUsers,
+  getPublicProfile,
+};

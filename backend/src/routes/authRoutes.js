@@ -13,10 +13,11 @@ const {
   assignTl,
   getAllUsers,
   getMyProfile,
+  getPublicProfile,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
-
+const { getAllSkills } = require("../controllers/skillController");
 const router = express.Router();
 
 // POST /login (el prefijo /api se agrega al montar esta ruta en app.js,
@@ -47,11 +48,15 @@ router.get("/users", verifyToken, requireRole("admin"), getAllUsers);
 // PATCH /users/:id/assign-tl — HU-01 (issues #65 y #66): asigna un TL
 // (instructor) a un usuario. Solo un admin autenticado. El service valida
 // que el TL destino tenga rol instructor (T1) y guarda tl_id (T2).
+
+router.get("/skills", verifyToken, getAllSkills);
+
 router.patch(
   "/users/:id/assign-tl",
   verifyToken,
   requireRole("admin"),
   assignTl,
 );
+router.get("/users/:id/public", verifyToken, getPublicProfile);
 
 module.exports = router;

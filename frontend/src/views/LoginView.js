@@ -32,7 +32,7 @@ function eyeOffIcon() {
 // Mapea el roleName del usuario autenticado a su ruta de destino tras el login
 const ROLE_ROUTES = {
   admin: "/admin",
-  coder: "/coder",
+  coder: "/dashboard",
   instructor: "/tl",
   recruiter: "/recruiter",
 };
