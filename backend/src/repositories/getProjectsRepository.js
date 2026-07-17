@@ -61,6 +61,36 @@ async function findAllForGallery() {
   return rows;
 }
 
+/**
+ * (TL Dashboard) Proyectos SIN calificar de los coders a cargo de un TL.
+ * "Sin calificar" = sin registro en gradings (LEFT JOIN ... WHERE g.id IS NULL, CA-03).
+ * Trae el nombre del coder dueño y las tecnologias (skills) del proyecto.
+ * El tlId sale del token, nunca de la URL (CA-01).
+ */
+async function findPendingByTl(tlId) {
+  const { rows } = await pool.query(
+    `SELECT
+        p.id,
+        p.title,
+        p.is_external,
+        p.created_at,
+        c.name AS coder_name,
+        ARRAY_REMOVE(ARRAY_AGG(DISTINCT sk.name), NULL) AS skills
+       FROM projects p
+       JOIN users c ON c.id = p.coder_id
+       LEFT JOIN gradings g ON g.project_id = p.id
+       LEFT JOIN project_skills ps ON ps.project_id = p.id
+       LEFT JOIN skills sk ON sk.id = ps.skill_id
+      WHERE c.tl_id = $1
+        AND g.id IS NULL
+      GROUP BY p.id, p.title, p.is_external, p.created_at, c.name
+      ORDER BY p.created_at DESC`,
+    [tlId],
+  );
+  return rows;
+}
+
 module.exports = {
   findAllForGallery,
+  findPendingByTl,
 };

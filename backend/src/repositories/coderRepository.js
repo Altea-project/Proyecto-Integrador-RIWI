@@ -113,9 +113,38 @@ async function findProjectsByCoderId(coderId) {
     return rows;
 }
 
+// ------------------------------------------------------------
+// TL Dashboard — Lista los coders a cargo de un TL (tl_id = $1), con su
+// puntaje promedio (AVG de las calificaciones de sus proyectos) y la
+// cantidad de proyectos. LEFT JOIN a projects/gradings para que un coder
+// sin proyectos o sin calificar igual aparezca (avg_score null).
+// El JOIN projects->gradings es 1:1 por proyecto (project_id UNIQUE),
+// asi que el AVG no se infla.
+// ------------------------------------------------------------
+async function findCodersByTl(tlId) {
+    const query = `
+        SELECT
+            u.id,
+            u.name,
+            u.avatar_url,
+            u.availability_status,
+            ROUND(AVG(g.score)) AS avg_score,
+            COUNT(DISTINCT p.id) AS project_count
+        FROM users u
+        LEFT JOIN projects p ON p.coder_id = u.id
+        LEFT JOIN gradings g ON g.project_id = p.id
+        WHERE u.tl_id = $1
+        GROUP BY u.id, u.name, u.avatar_url, u.availability_status
+        ORDER BY avg_score DESC NULLS LAST, u.name ASC
+    `;
+    const { rows } = await pool.query(query, [tlId]);
+    return rows;
+}
+
 module.exports = {
     searchBySkills,
     findCoderById,
     findSkillsByCoderId,
-    findProjectsByCoderId
+    findProjectsByCoderId,
+    findCodersByTl
 };

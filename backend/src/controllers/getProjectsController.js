@@ -43,4 +43,17 @@ async function getProjects(req, res, next) {
   }
 }
 
-module.exports = { getProjects };
+/**
+ * GET /projects/pending — TL Dashboard: proyectos sin calificar de los
+ * coders del instructor autenticado. El tlId sale del token (req.user.id).
+ */
+async function getPendingProjects(req, res, next) {
+  try {
+    const projects = await getProjectsService.getPendingProjects(req.user.id);
+    return res.status(200).json({ success: true, data: { projects } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getProjects, getPendingProjects };

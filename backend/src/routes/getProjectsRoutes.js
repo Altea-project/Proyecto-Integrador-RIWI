@@ -13,7 +13,8 @@
 // ============================================================
 
 const express = require("express");
-const { getProjects } = require("../controllers/getProjectsController");
+const requireRole = require("../middlewares/requireRole");
+const { getProjects, getPendingProjects } = require("../controllers/getProjectsController");
 const verifyToken = require("../middlewares/verifyToken");
 
 const router = express.Router();
@@ -24,5 +25,9 @@ const router = express.Router();
 // (si existe) y el nombre del TL que calificó, ya ordenados según
 // RN-04 (ver getProjectsRepository.findAllForGallery).
 router.get("/projects", verifyToken, getProjects);
+
+// GET /projects/pending — TL Dashboard: proyectos sin calificar de los
+// coders del TL autenticado. Solo instructor.
+router.get("/projects/pending", verifyToken, requireRole("instructor"), getPendingProjects);
 
 module.exports = router;

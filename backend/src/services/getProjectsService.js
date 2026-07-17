@@ -12,7 +12,7 @@
 // directas (responsabilidad del repository).
 // ============================================================
 
-const { findAllForGallery } = require("../repositories/getProjectsRepository");
+const { findAllForGallery, findPendingByTl } = require("../repositories/getProjectsRepository");
 
 /**
  * (T1 - HU-12) Abrevia el nombre del TL/instructor calificador para la
@@ -81,6 +81,23 @@ async function getGalleryProjects() {
   });
 }
 
+/**
+ * (TL Dashboard) Proyectos pendientes de revision del TL autenticado.
+ * Mapea las filas del repository a camelCase para el frontend.
+ */
+async function getPendingProjects(tlId) {
+  const rows = await findPendingByTl(tlId);
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    isExternal: row.is_external,
+    createdAt: row.created_at,
+    coderName: row.coder_name,
+    skills: row.skills || [],
+  }));
+}
+
 module.exports = {
   getGalleryProjects,
+  getPendingProjects,
 };
