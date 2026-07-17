@@ -158,6 +158,31 @@ async function findUserProfileById(id) {
     return rows[0];
 }
 
+/**
+ * Lista todos los usuarios (para el dashboard de admin, GET /users).
+ * Trae el nombre del rol (JOIN roles) y, si tiene, el nombre de su TL.
+ * Se hace LEFT JOIN con users (alias tl) porque tl_id puede ser NULL.
+ *
+ * Nota: authService.getAllUsers mapea estas columnas al shape público
+ * (camelCase) que espera el frontend, por eso se traen exactamente
+ * name, email, phone, document, company, role_name, tl_name, etc.
+ *
+ * @returns {Promise<Object[]>} Lista de todos los usuarios.
+ */
+async function findAllUsers() {
+    const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
+            u.role_id, r.name AS role_name,
+            u.tl_id, tl.name AS tl_name,
+            u.must_change_password, u.created_at
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        LEFT JOIN users tl ON u.tl_id = tl.id
+        ORDER BY u.id`,
+    );
+    return rows;
+}
+
 module.exports = {
     findUserByEmail,
     findUserByDocument,
@@ -165,4 +190,5 @@ module.exports = {
     createUser,
     findUserById,
     findUserProfileById,
+    findAllUsers,
 };
