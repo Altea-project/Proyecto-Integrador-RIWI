@@ -53,8 +53,8 @@ async function searchBySkills(skillIds) {
         JOIN roles r ON r.id = u.role_id AND r.name = 'coder'
         JOIN coder_scores cs  ON cs.coder_id = u.id
         JOIN coder_skills csk ON csk.coder_id = u.id
-        WHERE u.availability_status <> 'unavailable'   // RN-09
-        ORDER BY cs.avg_score DESC NULLS LAST, cs.has_starred DESC // RN-05
+        WHERE u.availability_status <> 'unavailable'   
+        ORDER BY cs.avg_score DESC NULLS LAST, cs.has_starred DESC 
     `;
 
     const { rows } = await pool.query(query, [skillIds]);
