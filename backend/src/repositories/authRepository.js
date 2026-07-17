@@ -240,6 +240,79 @@ async function updateUserTl(userId, tlId) {
     return rows[0];
 }
 
+/**
+ * Busca un usuario por su id, incluyendo el nombre del rol (JOIN roles).
+ * Se usa para validar que el usuario a editar/eliminar exista y para
+ * devolver su perfil público actualizado tras un UPDATE.
+ *
+ * @param {number} id - Id del usuario.
+ * @returns {Promise<Object|undefined>} El usuario encontrado, o undefined si no existe.
+ */
+async function findUserByIdFull(id) {
+    const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
+            u.role_id, r.name AS role_name, u.must_change_password,
+            u.created_at, u.updated_at
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = $1`,
+    [id],
+    );
+    return rows[0];
+}
+
+/**
+ * Actualiza los campos editables de un usuario (HU-01: edición por admin).
+ * Solo se actualizan las columnas permitidas; password, id, created_at,
+ * must_change_password y los campos de auditoría de disponibilidad no se
+ * tocan. company solo se guarda con sentido cuando el rol es "recruiter"
+ * (ver authService.updateUser); para cualquier otro rol se fuerza a null.
+ *
+ * @param {number} id - Id del usuario a actualizar.
+ * @param {Object} data - Campos a actualizar: { name, email, phone, document, company, roleId }.
+ * @returns {Promise<Object>} El usuario actualizado (mismo shape que findUserByIdFull).
+ */
+async function updateUserRepository(id, data) {
+    const { rows } = await pool.query(
+    `UPDATE users
+        SET name = $1,
+            email = $2,
+            phone = COALESCE($3, NULL),
+            document = COALESCE($4, NULL),
+            company = COALESCE($5, NULL),
+            role_id = $6,
+            updated_at = now()
+        WHERE id = $7
+        RETURNING id, name, email, phone, document, company, role_id, must_change_password, created_at, updated_at`,
+    [
+        data.name,
+        data.email,
+        data.phone,
+        data.document,
+        data.company,
+        data.roleId,
+        id,
+    ],
+    );
+    return rows[0];
+}
+
+/**
+ * Elimina un usuario por su id (solo admin). La FK de projects usa
+ * ON DELETE CASCADE, así que los proyectos del usuario se eliminan
+ * automáticamente junto con él.
+ *
+ * @param {number} id - Id del usuario a eliminar.
+ * @returns {Promise<number>} Cantidad de filas eliminadas (0 si no existía).
+ */
+async function deleteUserRepository(id) {
+    const { rowCount } = await pool.query(
+    `DELETE FROM users WHERE id = $1`,
+    [id],
+    );
+    return rowCount;
+}
+
 module.exports = {
     findUserByEmail,
     findUserByDocument,
@@ -251,4 +324,7 @@ module.exports = {
     findUserRoleAndTl,
     updateAvailabilityStatus,
     updateUserTl,
+    findUserByIdFull,
+    updateUserRepository,
+    deleteUserRepository,
 };
