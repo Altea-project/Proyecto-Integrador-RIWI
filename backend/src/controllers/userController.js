@@ -180,16 +180,63 @@ async function getMyProfile(req, res, next) {
 }
 
 /**
+ * PATCH /users/:id/status
+ *
+ * Cambia el estado de disponibilidad de un usuario.
+ */
+async function updateStatus(req, res, next) {
+  try {
+    const targetUserId = Number(req.params.id);
+    const { status } = req.body || {};
+
+    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "El id del usuario no es válido",
+      });
+    }
+
+    const user = await authService.changeAvailabilityStatus(
+      req.user,
+      targetUserId,
+      status,
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: { user },
+    });
+  } catch (error) {
+    if (error instanceof authService.InvalidStatusError) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    if (error instanceof authService.ForbiddenStatusError) {
+      return res.status(403).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
+    next(error);
+  }
+}
+
+/**
  * GET /users/:id/public
  *
  * Perfil público de un coder: visible para cualquier usuario
- * autenticado (reclutadores, otros coders, admin, etc.), con datos
- * filtrados (sin phone, document, ni mustChangePassword).
- *
- * Respuestas:
- * - 200: -> { success: true, data: { user } }
- * - 404: el usuario :id no existe
- * - 500: error inesperado -> manejador central
+ * autenticado.
  */
 async function getPublicProfile(req, res, next) {
   try {
@@ -211,8 +258,12 @@ async function getPublicProfile(req, res, next) {
     });
   } catch (error) {
     if (error instanceof authService.UserNotFoundError) {
-      return res.status(404).json({ success: false, error: error.message });
+      return res.status(404).json({
+        success: false,
+        error: error.message,
+      });
     }
+
     next(error);
   }
 }
@@ -222,5 +273,6 @@ module.exports = {
   assignTl,
   getMyProfile,
   getAllUsers,
+  updateStatus,
   getPublicProfile,
 };
