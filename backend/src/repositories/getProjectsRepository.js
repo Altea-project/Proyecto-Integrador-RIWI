@@ -18,12 +18,16 @@
 const pool = require("../config/db"); // Conexión a Supabase/PostgreSQL ya configurada.
 
 /**
- * (T1 - HU-12) Trae todos los proyectos para la galería, junto con su
- * calificación (si existe) y el nombre del instructor que calificó.
+ * (T1 - HU-12) Trae todos los proyectos para la galería, junto con el
+ * nombre del coder dueño del proyecto, su calificación (si existe) y
+ * el nombre del instructor que calificó.
  *
- * LEFT JOIN a "gradings" y "users" porque un proyecto puede no tener
- * calificación todavía (CA-02: "sin calificar"); con INNER JOIN esos
- * proyectos desaparecerían de la galería en vez de mostrarse al final.
+ * LEFT JOIN a "gradings" y al segundo alias de "users" (instructor)
+ * porque un proyecto puede no tener calificación todavía (CA-02: "sin
+ * calificar"); con INNER JOIN esos proyectos desaparecerían de la
+ * galería en vez de mostrarse al final. El JOIN al coder (dueño del
+ * proyecto) sí es INNER, porque "projects.coder_id" es NOT NULL y
+ * siempre existe.
  *
  * RN-04 (orden): mejor puntaje primero; en empate, los destacados
  * (starred) primero; los proyectos sin calificar (score IS NULL) van
@@ -44,10 +48,12 @@ async function findAllForGallery() {
         p.image_url,
         p.repo_url,
         p.is_external,
+        coder.name AS coder_name,
         g.score,
         g.starred,
         instructor.name AS graded_by_name
        FROM projects p
+       JOIN users coder ON coder.id = p.coder_id
        LEFT JOIN gradings g ON g.project_id = p.id
        LEFT JOIN users instructor ON instructor.id = g.instructor_id
       ORDER BY g.score DESC NULLS LAST, g.starred DESC NULLS LAST, p.id ASC`,

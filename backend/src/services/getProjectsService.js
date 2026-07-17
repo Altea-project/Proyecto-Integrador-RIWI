@@ -41,6 +41,8 @@ function abbreviateName(fullName) {
  * Traduce las filas crudas del repository (snake_case, con nulls
  * cuando el proyecto no tiene calificación) a un shape de negocio
  * (camelCase) que el frontend puede consumir directamente:
+ * - coderName: nombre del coder dueño del proyecto (en vez de exponer
+ *   su coder_id crudo, ya viene resuelto por el JOIN a "users").
  * - graded: boolean -> soporta el badge "Sin calificar" (CA-02).
  * - score/starred: null/false cuando el proyecto no ha sido calificado,
  *   para no filtrar un "score: 0" falso ni un "starred: true" fantasma.
@@ -65,6 +67,7 @@ async function getGalleryProjects() {
       imageUrl: row.image_url,
       repoUrl: row.repo_url,
       isExternal: row.is_external,
+      coderName: row.coder_name,
       graded,
       score: graded ? row.score : null,
       starred: graded ? row.starred : false,
