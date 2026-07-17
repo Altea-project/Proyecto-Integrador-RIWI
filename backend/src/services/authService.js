@@ -19,6 +19,8 @@ const {
   findUserProfileById,
   findAllUsers,
   updateUserTl,
+  findUserRoleAndTl,
+  updateAvailabilityStatus,
 } = require("../repositories/authRepository");
 const { generateToken } = require("../utils/jwt");
 
@@ -37,6 +39,11 @@ class DocumentAlreadyExistsError extends Error {} // Error de dominio para docum
 
 class UserNotFoundError extends Error {} // El usuario indicado (:id) no existe. -> 404
 class InvalidTlError extends Error {} // El TL indicado no existe o no tiene rol instructor. -> 400
+class InvalidStatusError extends Error {} // availability_status no valido -> 400
+class ForbiddenStatusError extends Error {} // no es admin ni el TL del coder -> 403
+
+// Estados validos de disponibilidad (ver enum en schema.sql).
+const VALID_AVAILABILITY_STATUSES = ["available", "in_conversation", "unavailable"];
 
 /**
  * Genera una contraseña temporal aleatoria y legible (evita caracteres
@@ -339,6 +346,52 @@ async function assignTl(userId, tlId) {
   };
 }
 
+/**
+ * HU-11 (T1 + T2) — Cambia el estado de disponibilidad de un usuario.
+ * Permiso (RN-10): un admin, o el instructor que sea el TL asignado a ese
+ * coder (tl_id === requester.id). Guarda la auditoria en el mismo UPDATE.
+ *
+ * @param {Object} requester - Usuario autenticado (req.user): { id, roleName }.
+ * @param {number} targetUserId - Usuario cuyo estado se cambia.
+ * @param {string} status - Nuevo estado.
+ * @returns {Promise<Object>} El usuario con su nuevo estado y la auditoria.
+ * @throws {InvalidStatusError} status no válido (400).
+ * @throws {UserNotFoundError} el usuario no existe (404).
+ * @throws {ForbiddenStatusError} no es admin ni el TL del coder (403).
+ */
+async function changeAvailabilityStatus(requester, targetUserId, status) {
+  if (!VALID_AVAILABILITY_STATUSES.includes(status)) {
+    throw new InvalidStatusError(
+      "Estado inválido. Debe ser: available, in_conversation o unavailable",
+    );
+  }
+
+  const target = await findUserRoleAndTl(targetUserId);
+  if (!target) {
+    throw new UserNotFoundError("El usuario indicado no existe");
+  }
+
+  // RN-10: admin, o instructor que sea el TL asignado a ese coder.
+  const isAdmin = requester.roleName === "admin";
+  const isAssignedTl =
+    requester.roleName === "instructor" && target.tl_id === requester.id;
+
+  if (!isAdmin && !isAssignedTl) {
+    throw new ForbiddenStatusError(
+      "No tienes permiso para cambiar el estado de este usuario",
+    );
+  }
+
+  const updated = await updateAvailabilityStatus(targetUserId, status, requester.id);
+  return {
+    id: updated.id,
+    name: updated.name,
+    availabilityStatus: updated.availability_status,
+    statusChangedBy: updated.status_changed_by,
+    statusChangedAt: updated.status_changed_at,
+  };
+}
+
 module.exports = {
   login,
   registerUser,
@@ -353,4 +406,7 @@ module.exports = {
   UserNotFoundError,
   InvalidTlError,
   UserNotFoundError,
+  changeAvailabilityStatus,
+  InvalidStatusError,
+  ForbiddenStatusError,
 };
