@@ -14,9 +14,12 @@ import {
   mountPublicProfileView,
   PublicProfileView,
 } from "../views/PublicProfileView.js";
-// import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
+import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
 // import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
-// import { ProjectDetailView, mountProjectDetailView } from "../views/ProjectDetailView.js";
+import {
+  ProjectDetailView,
+  mountProjectDetailView,
+} from "../views/ProjectDetailView.js";
 // import { PublicProfileView, mountPublicProfileView } from "../views/PublicProfileView.js";
 // import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
 
@@ -44,19 +47,24 @@ export const routes = [
     roles: null,
   },
 
-  // {
-  //   path: "/tl",
-  //   view: TLDashboard,
-  //   mount: mountTLDashboard,
-  //   roles: ["instructor"],
-  // },
+  {
+    path: "/tl",
+    view: TLDashboard,
+    mount: mountTLDashboard,
+    roles: ["instructor"],
+  },
+  {
+    path: "/project/:id",
+    view: ProjectDetailView,
+    mount: mountProjectDetailView,
+    roles: ["instructor"],
+  },
   // {
   //   path: "/recruiter",
   //   view: RecruiterView,
   //   mount: mountRecruiterView,
   //   roles: ["recruiter"],
   // },
-  // { path: "/project/:id", view: ProjectDetailView, mount: mountProjectDetailView },
 
   // { path: "/gallery", view: GalleryView, mount: mountGalleryView },
 ];
