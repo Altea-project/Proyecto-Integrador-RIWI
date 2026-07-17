@@ -6,7 +6,14 @@ import {
 } from "../views/ChangePasswordView.js";
 import { NotFoundView } from "../views/NotFoundView.js";
 import { AdminView, mountAdminView } from "../views/AdminView.js";
-// import { CoderDashboard, mountCoderDashboard } from "../views/CoderDashboard.js";
+import {
+  CoderDashboard,
+  mountCoderDashboard,
+} from "../views/CoderDashboard.js";
+import {
+  mountPublicProfileView,
+  PublicProfileView,
+} from "../views/PublicProfileView.js";
 // import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
 // import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
 // import { ProjectDetailView, mountProjectDetailView } from "../views/ProjectDetailView.js";
@@ -24,12 +31,19 @@ export const routes = [
   },
   { path: "*", view: NotFoundView, mount: "", roles: null },
   { path: "/admin", view: AdminView, mount: mountAdminView, roles: ["admin"] },
-  // {
-  //   path: "/coder",
-  //   view: CoderDashboard,
-  //   mount: mountCoderDashboard,
-  //   roles: ["coder"],
-  // },
+  {
+    path: "/dashboard",
+    view: CoderDashboard,
+    mount: mountCoderDashboard,
+    roles: ["coder"],
+  },
+  {
+    path: "/profile/:id",
+    view: PublicProfileView,
+    mount: mountPublicProfileView,
+    roles: null,
+  },
+
   // {
   //   path: "/tl",
   //   view: TLDashboard,
@@ -43,6 +57,6 @@ export const routes = [
   //   roles: ["recruiter"],
   // },
   // { path: "/project/:id", view: ProjectDetailView, mount: mountProjectDetailView },
-  // { path: "/profile/:username", view: PublicProfileView, mount: mountPublicProfileView },
+
   // { path: "/gallery", view: GalleryView, mount: mountGalleryView },
 ];

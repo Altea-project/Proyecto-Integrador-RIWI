@@ -1,13 +1,7 @@
-// ============================================================
-// skillService.js
-// Logica del catalogo de skills. No hay reglas complejas: pide el
-// listado al repository y lo entrega tal cual.
-// ============================================================
-const skillRepository = require('../repositories/skillRepository');
+const { findAllSkills } = require("../repositories/skillRepository");
 
-// Lista completa de skills para el selector de tecnologias.
 async function getAllSkills() {
-    return skillRepository.findAllSkills();
+  return await findAllSkills();
 }
 
 module.exports = { getAllSkills };

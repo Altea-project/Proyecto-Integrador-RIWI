@@ -218,7 +218,7 @@ export function AdminView() {
         </div>
 
        <!-- KPI SUMMARY (VISIÓN Saas) -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 animate-in fade-in slide-in-from-bottom duration-700">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-8 animate-in fade-in slide-in-from-bottom duration-700">
            <div class="p-6 bg-[#161B26]/60 backdrop-blur-xl border border-border-default/80 rounded-[10px] hover:border-[#8044F0]/40 transition-all hover:translate-y-[-4px]">
               <p class="text-[10px] font-black text-text-tertiary tracking-[0.15em] mb-3 uppercase italic">Talento Global</p>
               <div class="flex items-end gap-2">
