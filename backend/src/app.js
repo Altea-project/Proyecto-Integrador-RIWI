@@ -16,6 +16,7 @@ const getProjectsRoutes = require('./routes/getProjectsRoutes'); // HU-12 · T1:
 const interestRoutes = require('./routes/interestRoutes'); // POST /interests: reclutador muestra interés en un proyecto
 const gradingRoutes = require('./routes/gradingRoutes'); // HU-06: POST /gradings, PATCH /gradings/:id
 const coderRoutes = require('./routes/coderRoutes');
+const skillRoutes = require('./routes/skillRoutes'); // HU-03 - T3: GET /skills (catalogo de tecnologias)
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api', getProjectsRoutes); // GET /api/projects (HU-12 · T1: galería)
 app.use('/api/interests', interestRoutes); // POST /api/interests
 app.use('/api', gradingRoutes); // POST /api/gradings, PATCH /api/gradings/:id
 app.use('/api/coders', coderRoutes); // GET /api/coders/search
+app.use('/api', skillRoutes); // GET /api/skills (HU-03 - T3)
 
 // Ruta de salud simple, útil para confirmar que el servidor responde
 // antes de probar rutas más complejas.
