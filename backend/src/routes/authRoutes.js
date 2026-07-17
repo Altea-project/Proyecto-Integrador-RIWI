@@ -13,6 +13,7 @@ const {
   assignTl,
   getAllUsers,
   getMyProfile,
+  updateStatus,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
@@ -52,6 +53,16 @@ router.patch(
   verifyToken,
   requireRole("admin"),
   assignTl,
+);
+
+// PATCH /users/:id/status — HU-11: cambia el estado de disponibilidad de un
+// usuario. Puede hacerlo un admin o un instructor; el service valida que ese
+// instructor sea el TL del coder (RN-10). Guarda la auditoria (T2).
+router.patch(
+  "/users/:id/status",
+  verifyToken,
+  requireRole("admin", "instructor"),
+  updateStatus,
 );
 
 module.exports = router;

@@ -179,4 +179,39 @@ async function getMyProfile(req, res, next) {
   }
 }
 
-module.exports = { registerUser, assignTl, getMyProfile, getAllUsers };
+/**
+ * PATCH /users/:id/status — HU-11
+ * Cambia el estado de disponibilidad de un usuario. La ruta ya exige rol
+ * admin o instructor; el service hace la validacion fina (que el
+ * instructor sea el TL de ese coder). Body: { status }.
+ */
+async function updateStatus(req, res, next) {
+    try {
+        const targetUserId = Number(req.params.id);
+        const { status } = req.body || {};
+
+        if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: "El id del usuario no es válido",
+            });
+        }
+
+        const user = await authService.changeAvailabilityStatus(req.user, targetUserId, status);
+
+        return res.status(200).json({ success: true, data: { user } });
+    } catch (error) {
+        if (error instanceof authService.InvalidStatusError) {
+            return res.status(400).json({ success: false, error: error.message });
+        }
+        if (error instanceof authService.UserNotFoundError) {
+            return res.status(404).json({ success: false, error: error.message });
+        }
+        if (error instanceof authService.ForbiddenStatusError) {
+            return res.status(403).json({ success: false, error: error.message });
+        }
+        next(error);
+    }
+}
+
+module.exports = { registerUser, assignTl, getMyProfile, getAllUsers, updateStatus };

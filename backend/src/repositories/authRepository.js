@@ -183,6 +183,63 @@ async function findAllUsers() {
     return rows;
 }
 
+/**
+ * Trae el rol y el tl_id de un usuario. Se usa en el cambio de estado
+ * (HU-11) para validar el permiso: admin, o el instructor que es su TL.
+ *
+ * @param {number} id
+ * @returns {Promise<Object|undefined>} { id, role_id, role_name, tl_id, availability_status } o undefined.
+ */
+async function findUserRoleAndTl(id) {
+    const { rows } = await pool.query(
+    `SELECT u.id, u.role_id, r.name AS role_name, u.tl_id, u.availability_status
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = $1`,
+    [id],
+    );
+    return rows[0];
+}
+
+/**
+ * (HU-11 T1 + T2) Cambia el availability_status de un usuario y registra
+ * la auditoria (status_changed_by y status_changed_at) en el mismo UPDATE.
+ *
+ * @param {number} userId - Usuario cuyo estado cambia.
+ * @param {string} status - Nuevo estado.
+ * @param {number} changedById - Id de quien hace el cambio (admin o TL).
+ * @returns {Promise<Object>} El usuario con su nuevo estado y la auditoria.
+ */
+async function updateAvailabilityStatus(userId, status, changedById) {
+    const { rows } = await pool.query(
+    `UPDATE users
+        SET availability_status = $1,
+            status_changed_by = $2,
+            status_changed_at = now(),
+            updated_at = now()
+        WHERE id = $3
+        RETURNING id, name, availability_status, status_changed_by, status_changed_at`,
+    [status, changedById, userId],
+    );
+    return rows[0];
+}
+
+/**
+ * (assign-tl, issue #66) Guarda la asignacion de TL: actualiza el campo
+ * tl_id del usuario. Se habia perdido en un merge, lo que rompia el
+ * endpoint PATCH /users/:id/assign-tl (updateUserTl is not a function).
+ */
+async function updateUserTl(userId, tlId) {
+    const { rows } = await pool.query(
+    `UPDATE users
+        SET tl_id = $1, updated_at = now()
+        WHERE id = $2
+        RETURNING id, name, email, role_id, tl_id`,
+    [tlId, userId],
+    );
+    return rows[0];
+}
+
 module.exports = {
     findUserByEmail,
     findUserByDocument,
@@ -191,4 +248,7 @@ module.exports = {
     findUserById,
     findUserProfileById,
     findAllUsers,
+    findUserRoleAndTl,
+    updateAvailabilityStatus,
+    updateUserTl,
 };
