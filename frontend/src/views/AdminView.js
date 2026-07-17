@@ -20,6 +20,11 @@ let lastCreatedUser = null;
 let currentUsers = [];
 let activeFilter = "all";
 let searchTerm = "";
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let totalPages = 1;
+let selectedUser = null;
+let userToDelete = null;
 
 // --- COMPONENTE: MODAL DE REGISTRO ---
 function renderRegisterModal() {
@@ -180,6 +185,127 @@ function renderAssignTlModal() {
     `,
   });
 }
+// --- COMPONENTE: MODAL DE EDICIÓN (MISMO ESTILO QUE REGISTRO) ---
+function renderEditModal() {
+  return Modal({
+    id: "modal-edit",
+    title: "Reconfigurar Identidad",
+    size: "md",
+    content: `
+      <div class="space-y-7 animate-in fade-in zoom-in duration-300">
+        <div class="flex items-center gap-4 p-5 bg-[#8044F0]/5 rounded-2xl border border-[#8044F0]/15 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-r from-[#8044F0]/0 via-[#8044F0]/5 to-[#8044F0]/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div class="p-3 bg-[#8044F0]/20 rounded-xl text-[#8044F0] shadow-sm">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-[#8044F0] uppercase tracking-[0.15em] mb-0.5">Seguridad Altea</p>
+                <p class="text-sm font-medium text-text-secondary">Modificando el escalafón técnico del miembro.</p>
+            </div>
+        </div>
+
+        <form id="edit-form" class="space-y-6" novalidate>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-1.5">
+              ${Input({ id: "edit-name", label: "Nombre Profesional", placeholder: "Identificación del usuario" })}
+              <p id="edit-name-error" class="text-state-error text-[10px] font-bold hidden px-1"></p>
+            </div>
+            <div class="space-y-1.5">
+              ${Input({ id: "edit-email", label: "Correo Corporativo", type: "email", placeholder: "ejemplo@riwi.io" })}
+              <p id="edit-email-error" class="text-state-error text-[10px] font-bold hidden px-1"></p>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            ${Select({ id: "edit-role", label: "Rango de Sistema", options: ROLE_OPTIONS, placeholder: "Definir privilegios..." })}
+            <p id="edit-role-error" class="text-state-error text-[10px] font-bold hidden px-1"></p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-border-default/50">
+            ${Input({ id: "edit-phone", label: "Teléfono", placeholder: "+57 300..." })}
+            ${Input({ id: "edit-document", label: "DNI / Documento", placeholder: "ID Institucional" })}
+          </div>
+
+          <div id="edit-company-field" class="hidden overflow-hidden transition-all duration-500 ease-in-out">
+             <div class="p-4 rounded-2xl bg-bg-primary/50 border border-[#8044F0]/30 shadow-inner mt-2">
+                ${Input({ id: "edit-company", label: "Compañía Partner", placeholder: "Empresa de reclutamiento" })}
+             </div>
+          </div>
+
+          <p id="edit-form-error" class="bg-state-error/10 text-state-error p-4 rounded-xl text-[11px] font-black text-center border border-state-error/20 hidden" role="alert"></p>
+        </form>
+      </div>
+    `,
+    footer: `
+      <div class="flex items-center justify-end gap-5 w-full border-t border-border-default pt-6 mt-4">
+        <button type="button" data-modal-close="modal-edit" class="text-[11px] font-black text-text-tertiary hover:text-text-primary tracking-widest uppercase transition-all duration-300 active:scale-95">
+          DESCARTAR
+        </button>
+        <button type="button" id="edit-submit-btn" class="px-8 py-3.5 bg-[#8044F0] text-text-primary text-[11px] font-black rounded-xl hover:bg-[#9A6AF5] hover:shadow-[0_8px_20px_-4px_rgba(128,68,240,0.4)] transition-all duration-300 tracking-widest uppercase shadow-lg shadow-[#8044F0]/10 active:scale-95">
+          GUARDAR CAMBIOS
+        </button>
+      </div>
+    `,
+  });
+}
+
+// --- COMPONENTE: MODAL DE CONFIRMACIÓN DE BORRADO ---
+function renderDeleteModal() {
+  return Modal({
+    id: "modal-delete",
+    title: "Eliminar miembro",
+    size: "sm",
+    content: `
+      <div class="py-2 animate-in fade-in slide-in-from-bottom duration-300">
+        <p class="text-sm font-medium text-text-primary mb-2">¿Estás seguro de que deseas eliminar este miembro?</p>
+        <p class="text-[11px] text-text-tertiary font-medium uppercase tracking-widest">Esta acción no se puede deshacer.</p>
+      </div>
+    `,
+    footer: `
+      <div class="flex items-center justify-end gap-4 w-full">
+        <button type="button" data-modal-close="modal-delete" class="text-[11px] font-black text-text-tertiary hover:text-text-primary tracking-widest uppercase transition-all duration-300 active:scale-95">
+          Cancelar
+        </button>
+        <button type="button" id="delete-confirm-btn" class="px-8 py-3.5 bg-[#EF4444] text-white text-[11px] font-black rounded-xl hover:bg-[#F87171] hover:shadow-[0_8px_20px_-4px_rgba(239,68,68,0.4)] transition-all duration-300 tracking-widest uppercase shadow-lg shadow-[#EF4444]/10 active:scale-95">
+          Eliminar
+        </button>
+      </div>
+    `,
+  });
+}
+
+// --- COMPONENTE: PAGINACIÓN (reusa Button visualmente) ---
+function renderPagination() {
+  const pages = [];
+  for (let p = 1; p <= totalPages; p++) {
+    pages.push(p);
+  }
+
+  const pageButtons = pages
+    .map((p) => {
+      const active = p === currentPage;
+      const base =
+        "px-4 py-2.5 rounded-xl text-[11px] font-black tracking-widest uppercase transition-all duration-300 active:scale-95";
+      const style = active
+        ? "bg-brand-primary text-text-primary shadow-[0_10px_20px_-5px_rgba(128,68,240,0.4)]"
+        : "bg-white/[0.03] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] border border-border-default";
+      return `<button data-page="${p}" class="${base} ${style}">${p}</button>`;
+    })
+    .join("");
+
+  return `
+    <div class="flex items-center justify-center gap-3 mt-8 flex-wrap">
+      <button data-page="prev" ${currentPage === 1 ? "disabled" : ""} class="px-5 py-2.5 rounded-xl text-[11px] font-black tracking-widest uppercase transition-all duration-300 active:scale-95 bg-white/[0.03] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] border border-border-default disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.03] disabled:hover:text-text-secondary">
+        Atras
+      </button>
+      ${pageButtons}
+      <button data-page="next" ${currentPage === totalPages ? "disabled" : ""} class="px-5 py-2.5 rounded-xl text-[11px] font-black tracking-widest uppercase transition-all duration-300 active:scale-95 bg-white/[0.03] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] border border-border-default disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/[0.03] disabled:hover:text-text-secondary">
+        Siguiente
+      </button>
+    </div>
+  `;
+}
+
 // --- VISTA DASHBOARD (HIGH FIDELITY) ---
 export function AdminView() {
   return `
@@ -297,6 +423,8 @@ export function AdminView() {
             </tbody>
           </table>
         </div>
+
+        <div id="pagination-container"></div>
       </section>
 
       <div id="temp-password-modal-mount"></div>
@@ -304,6 +432,8 @@ export function AdminView() {
 
     ${renderRegisterModal()}
     ${renderAssignTlModal()}
+    ${renderEditModal()}
+    ${renderDeleteModal()}
   `;
 }
 
@@ -413,6 +543,7 @@ async function handleRegisterUser() {
     bindModalCloseEvents();
     openModal("modal-temp-password");
     showToast("CERTIFICADO REGISTRADO CON ÉXITO.", "success");
+    currentPage = 1;
     await loadUsers();
   } catch (error) {
     const msg = error.body?.error || "Falla en la red del ledger.";
@@ -512,6 +643,7 @@ function bindFilterTabs() {
   document.querySelectorAll(".filter-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       activeFilter = tab.dataset.filter;
+      currentPage = 1;
 
       // Actualiza el estilo visual: cuál tab está activo
       document.querySelectorAll(".filter-tab").forEach((t) => {
@@ -536,10 +668,185 @@ function bindFilterTabs() {
 
 function bindSearchInput() {
   const input = document.getElementById("user-search-input");
-  input?.addEventListener("input", (e) => {
+    input?.addEventListener("input", (e) => {
     searchTerm = e.target.value;
+    currentPage = 1;
     renderFilteredTable();
   });
+}
+
+function bindPagination() {
+  const container = document.getElementById("pagination-container");
+  container?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-page]");
+    if (!btn) return;
+
+    const action = btn.dataset.page;
+    if (action === "prev") {
+      if (currentPage > 1) currentPage--;
+    } else if (action === "next") {
+      if (currentPage < totalPages) currentPage++;
+    } else {
+      currentPage = Number(action);
+    }
+    renderFilteredTable();
+  });
+}
+
+function bindEditRoleChange() {
+  const roleSelect = document.getElementById("edit-role");
+  const companyField = document.getElementById("edit-company-field");
+
+  if (roleSelect && companyField) {
+    roleSelect.addEventListener("change", () => {
+      const show = roleSelect.value === ROLES.RECRUITER;
+      if (show) {
+        companyField.classList.remove("hidden");
+        requestAnimationFrame(() => {
+          companyField.classList.add("max-h-[200px]", "opacity-100");
+          companyField.classList.remove("max-h-0", "opacity-0");
+        });
+      } else {
+        companyField.classList.add("opacity-0");
+        setTimeout(() => companyField.classList.add("hidden"), 300);
+      }
+    });
+  }
+}
+
+function bindEditUserDelegation() {
+  const tbody = document.querySelector("tbody");
+  tbody.addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="edit-user"]');
+    if (!btn) return;
+
+    const id = Number(btn.dataset.userId);
+    selectedUser = currentUsers.find((u) => u.id === id);
+    if (!selectedUser) return;
+
+    openEditModal();
+  });
+}
+
+function openEditModal() {
+  document.getElementById("edit-name").value = selectedUser.name || "";
+  document.getElementById("edit-email").value = selectedUser.email || "";
+  document.getElementById("edit-phone").value = selectedUser.phone || "";
+  document.getElementById("edit-document").value = selectedUser.document || "";
+  document.getElementById("edit-role").value = selectedUser.roleName || "";
+  document.getElementById("edit-company").value = selectedUser.company || "";
+
+  const companyField = document.getElementById("edit-company-field");
+  if (selectedUser.roleName === ROLES.RECRUITER) {
+    companyField.classList.remove("hidden");
+    requestAnimationFrame(() => {
+      companyField.classList.add("max-h-[200px]", "opacity-100");
+      companyField.classList.remove("max-h-0", "opacity-0");
+    });
+  } else {
+    companyField.classList.add("hidden", "opacity-0");
+  }
+
+  document
+    .querySelectorAll("#edit-form [id$='-error']")
+    .forEach((el) => el.classList.add("hidden"));
+  const formError = document.getElementById("edit-form-error");
+  if (formError) formError.classList.add("hidden");
+
+  openModal("modal-edit");
+}
+
+async function handleEditUser() {
+  document
+    .querySelectorAll("#edit-form [id$='-error']")
+    .forEach((el) => el.classList.add("hidden"));
+
+  const payload = {
+    name: document.getElementById("edit-name")?.value.trim(),
+    email: document.getElementById("edit-email")?.value.trim(),
+    role: document.getElementById("edit-role")?.value,
+    phone: document.getElementById("edit-phone")?.value.trim() || undefined,
+    document:
+      document.getElementById("edit-document")?.value.trim() || undefined,
+    company:
+      document.getElementById("edit-role")?.value === ROLES.RECRUITER
+        ? document.getElementById("edit-company")?.value.trim()
+        : undefined,
+  };
+
+  let valid = true;
+  if (!payload.name) {
+    showFieldError("edit-name-error", "La firma es obligatoria.");
+    valid = false;
+  }
+  if (!payload.role) {
+    showFieldError("edit-role-error", "El nivel de sistema es requerido.");
+    valid = false;
+  }
+  const { valid: emailOk, errors } = validateForm({ email: payload.email });
+  if (!emailOk) {
+    showFieldError("edit-email-error", errors.email);
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  const btn = document.getElementById("edit-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "SINCRONIZANDO...";
+
+  try {
+    await userService.updateUser(selectedUser.id, payload);
+    hideModal("modal-edit");
+    showToast("MIEMBRO ACTUALIZADO CON ÉXITO.", "success");
+    await loadUsers();
+  } catch (error) {
+    const msg = error.body?.error || "Falla en la red del ledger.";
+    showToast(msg, "error");
+    const errEl = document.getElementById("edit-form-error");
+    errEl.textContent = msg;
+    errEl.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "GUARDAR CAMBIOS";
+  }
+}
+
+function bindDeleteDelegation() {
+  const tbody = document.querySelector("tbody");
+  tbody.addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="delete-user"]');
+    if (!btn) return;
+
+    userToDelete = {
+      id: Number(btn.dataset.userId),
+      name: btn.dataset.userName,
+    };
+    openModal("modal-delete");
+  });
+}
+
+async function handleDeleteUser() {
+  if (!userToDelete) return;
+
+  const btn = document.getElementById("delete-confirm-btn");
+  btn.disabled = true;
+  btn.textContent = "DELETING...";
+
+  try {
+    await userService.deleteUser(userToDelete.id);
+    hideModal("modal-delete");
+    showToast("MIEMBRO ELIMINADO DE ALTEA.", "error");
+    currentPage = 1;
+    await loadUsers();
+  } catch (error) {
+    const msg = error.body?.error || "No se pudo eliminar el miembro.";
+    showToast(msg, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Delete";
+    userToDelete = null;
+  }
 }
 
 export async function mountAdminView() {
@@ -557,6 +864,17 @@ export async function mountAdminView() {
     .getElementById("assign-tl-submit-btn")
     ?.addEventListener("click", handleAssignTl);
 
+  bindPagination();
+  bindEditRoleChange();
+  bindEditUserDelegation();
+  bindDeleteDelegation();
+  document
+    .getElementById("edit-submit-btn")
+    ?.addEventListener("click", handleEditUser);
+  document
+    .getElementById("delete-confirm-btn")
+    ?.addEventListener("click", handleDeleteUser);
+
   bindFilterTabs();
   bindSearchInput();
 }
@@ -572,7 +890,7 @@ async function loadUsers() {
   }
 }
 
-function renderFilteredTable() {
+function getFilteredUsers() {
   let filtered = currentUsers;
 
   if (activeFilter !== "all") {
@@ -588,10 +906,27 @@ function renderFilteredTable() {
     );
   }
 
+  return filtered;
+}
+
+function renderFilteredTable() {
+  const filtered = getFilteredUsers();
+
+  totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageUsers = filtered.slice(start, start + PAGE_SIZE);
+
   const tbody = document.querySelector("tbody");
-  tbody.innerHTML = filtered.length
-    ? filtered.map((user) => UserRow(user)).join("")
+  tbody.innerHTML = pageUsers.length
+    ? pageUsers.map((user) => UserRow(user)).join("")
     : `<tr><td colspan="4" class="py-10 text-center text-text-tertiary text-sm">Sin resultados</td></tr>`;
+
+  const pagination = document.getElementById("pagination-container");
+  if (pagination) {
+    pagination.innerHTML = totalPages > 1 ? renderPagination() : "";
+  }
 }
 
 // NUEVO: calcula los totales por rol y los pinta en las tarjetas KPI

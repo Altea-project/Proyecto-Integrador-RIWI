@@ -15,6 +15,8 @@ const {
   getMyProfile,
   updateStatus,
   getPublicProfile,
+  updateUserController,
+  deleteUserController,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
@@ -69,5 +71,28 @@ router.patch(
   updateStatus,
 );
 router.get("/users/:id/public", verifyToken, getPublicProfile);
+
+// PATCH /users/:id — HU-01 (edición por admin): actualiza name, email,
+// phone, document, role y company (solo recruiter) de un usuario. Se
+// registra DESPUÉS de las rutas más específicas (/users/:id/assign-tl y
+// /users/:id/status) para que no las intercepte. Nunca permite tocar
+// password, id, created_at ni datos de autenticación (ver authService.updateUser).
+router.patch(
+  "/users/:id",
+  verifyToken,
+  requireRole("admin"),
+  updateUserController,
+);
+
+// DELETE /users/:id — HU-01 (borrado por admin): elimina un usuario.
+// Solo admin. El service bloquea eliminarse a sí mismo (403) y usuarios
+// inexistentes (404). Se registra al final de las rutas /users/:id/* para
+// no colisionar con las anteriores.
+router.delete(
+  "/users/:id",
+  verifyToken,
+  requireRole("admin"),
+  deleteUserController,
+);
 
 module.exports = router;

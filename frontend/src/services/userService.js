@@ -32,4 +32,21 @@ export const userService = {
     });
     return response;
   },
+
+  async updateUser(userId, { name, email, phone, document, role, company }) {
+    const response = await apiClient.patch(`/users/${userId}`, {
+      name,
+      email,
+      phone,
+      document,
+      role,
+      company,
+    });
+    return response;
+  },
+
+  async deleteUser(userId) {
+    const response = await apiClient.delete(`/users/${userId}`);
+    return response;
+  },
 };

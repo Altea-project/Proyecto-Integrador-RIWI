@@ -268,6 +268,105 @@ async function getPublicProfile(req, res, next) {
   }
 }
 
+/**
+ * PATCH /users/:id
+ *
+ * Ruta protegida (admin): actualiza los datos de un usuario existente
+ * (usada por el modal "Editar miembro"). Reutiliza la validación de
+ * negocio del service (rol válido, email/document únicos excluyendo al
+ * propio usuario, company solo para recruiter). Nunca se permite cambiar
+ * password, id, created_at ni datos de autenticación.
+ *
+ * Respuestas posibles:
+ * - 200: usuario actualizado -> { success: true, data: { user } }
+ * - 400: faltan campos obligatorios o el rol no existe
+ * - 404: el usuario :id no existe
+ * - 409: el email o el document ya están en uso por otro usuario
+ * - 500: error inesperado -> delega al manejador de errores centralizado
+ */
+async function updateUserController(req, res, next) {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "El id del usuario no es válido",
+      });
+    }
+
+    const { name, email, role, phone, document, company } = req.body || {};
+
+    const user = await authService.updateUser(userId, {
+      name,
+      email,
+      role,
+      phone,
+      document,
+      company,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: { user },
+    });
+  } catch (error) {
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    if (error instanceof authService.RoleNotFoundError) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+    if (
+      error instanceof authService.EmailAlreadyExistsError ||
+      error instanceof authService.DocumentAlreadyExistsError
+    ) {
+      return res.status(409).json({ success: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+/**
+ * DELETE /users/:id
+ *
+ * Ruta protegida (solo admin): elimina un usuario (usada por el modal de
+ * confirmación "Delete Member"). El service valida que el usuario exista
+ * y que el admin no intente eliminarse a sí mismo.
+ *
+ * Respuestas posibles:
+ * - 200: eliminado -> { success: true, message: "User deleted successfully" }
+ * - 400: id inválido
+ * - 403: el admin intenta eliminarse a sí mismo
+ * - 404: el usuario :id no existe
+ * - 500: error inesperado -> delega al manejador de errores centralizado
+ */
+async function deleteUserController(req, res, next) {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "El id del usuario no es válido",
+      });
+    }
+
+    await authService.deleteUser(userId, req.user);
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    if (error instanceof authService.ForbiddenStatusError) {
+      return res.status(403).json({ success: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
 module.exports = {
   registerUser,
   assignTl,
@@ -275,4 +374,6 @@ module.exports = {
   getAllUsers,
   updateStatus,
   getPublicProfile,
+  updateUserController,
+  deleteUserController,
 };

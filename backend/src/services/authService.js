@@ -21,6 +21,9 @@ const {
   updateUserTl,
   findUserRoleAndTl,
   updateAvailabilityStatus,
+  findUserByIdFull,
+  updateUserRepository,
+  deleteUserRepository,
 } = require("../repositories/authRepository");
 const { generateToken } = require("../utils/jwt");
 
@@ -392,12 +395,138 @@ async function changeAvailabilityStatus(requester, targetUserId, status) {
   };
 }
 
+/**
+ * Actualiza los datos de un usuario existente (HU-01: edición por admin,
+ * usada por el modal "Editar miembro").
+ *
+ * Reglas de negocio (las mismas validaciones que el registro, pero
+ * tolerando el propio usuario):
+ * - name, email y role son obligatorios.
+ * - role debe existir (RoleNotFoundError -> 400).
+ * - email único, ignorando al propio usuario que se está editando
+ *   (EmailAlreadyExistsError -> 409).
+ * - document único (si se envía), ignorando al propio usuario
+ *   (DocumentAlreadyExistsError -> 409).
+ * - company solo se guarda cuando role === 'recruiter'; para cualquier
+ *   otro rol se fuerza a null.
+ * - Nunca se permite modificar password, id, created_at, must_change_password
+ *   ni datos de autenticación (no se reciben ni se escriben aquí).
+ *
+ * @param {number} userId - Id del usuario a actualizar.
+ * @param {Object} data
+ * @param {string} data.name
+ * @param {string} data.email
+ * @param {string} data.role - Nombre del rol (ej. "admin", "coder").
+ * @param {string} [data.phone]
+ * @param {string} [data.document]
+ * @param {string} [data.company] - Solo se guarda si role === 'recruiter'.
+ * @returns {Promise<Object>} El usuario actualizado (mismo shape que getMyProfile, sin campos sensibles).
+ * @throws {UserNotFoundError} Si el usuario :id no existe (404).
+ * @throws {RoleNotFoundError} Si el rol no existe (400).
+ * @throws {EmailAlreadyExistsError} Si el email ya está en uso por otro usuario (409).
+ * @throws {DocumentAlreadyExistsError} Si el document ya está en uso por otro usuario (409).
+ */
+async function updateUser(userId, { name, email, role, phone, document, company }) {
+  const existingUser = await findUserByIdFull(userId);
+  if (!existingUser) {
+    throw new UserNotFoundError("Usuario no encontrado");
+  }
+
+  if (!name || !email || !role) {
+    throw new RoleNotFoundError(
+      "name, email y role son obligatorios",
+    );
+  }
+
+  const roleRecord = await findRoleByName(role);
+  if (!roleRecord) {
+    throw new RoleNotFoundError(`El rol "${role}" no existe`);
+  }
+
+  const emailConflict = await findUserByEmail(email);
+  if (emailConflict && emailConflict.id !== userId) {
+    throw new EmailAlreadyExistsError(
+      "Ya existe otro usuario registrado con ese correo",
+    );
+  }
+
+  if (document) {
+    const documentConflict = await findUserByDocument(document);
+    if (documentConflict && documentConflict.id !== userId) {
+      throw new DocumentAlreadyExistsError(
+        "Ya existe otro usuario registrado con ese documento",
+      );
+    }
+  }
+
+  // company solo tiene sentido para el rol "recruiter"; para cualquier
+  // otro rol se ignora y se guarda como null (mismo criterio que registerUser).
+  const finalCompany = role === "recruiter" ? company : null;
+
+  const updated = await updateUserRepository(userId, {
+    name,
+    email,
+    phone,
+    document,
+    company: finalCompany,
+    roleId: roleRecord.id,
+  });
+
+  return {
+    id: updated.id,
+    name: updated.name,
+    email: updated.email,
+    phone: updated.phone,
+    document: updated.document,
+    company: updated.company,
+    roleId: updated.role_id,
+    roleName: roleRecord.name,
+    mustChangePassword: updated.must_change_password,
+    createdAt: updated.created_at,
+    updatedAt: updated.updated_at,
+  };
+}
+
+/**
+ * Elimina un usuario (HU-01: borrado por admin, usada por el modal de
+ * confirmación "Delete Member"). Solo un admin autenticado puede hacerlo
+ * (lo garantiza el middleware requireRole('admin') en la ruta).
+ *
+ * Reglas adicionales de negocio:
+ * - No se puede eliminar a uno mismo (el admin autenticado), para no
+ *   dejarse sin acceso a la consola. -> 403.
+ * - No se puede eliminar un usuario que no existe. -> 404.
+ *
+ * @param {number} userId - Id del usuario a eliminar.
+ * @param {Object} requester - Usuario autenticado (req.user): { id, roleName }.
+ * @returns {Promise<void>}
+ * @throws {UserNotFoundError} Si el usuario :id no existe (404).
+ * @throws {ForbiddenStatusError} Si el admin intenta eliminarse a sí mismo (403).
+ */
+async function deleteUser(userId, requester) {
+  const existingUser = await findUserByIdFull(userId);
+  if (!existingUser) {
+    throw new UserNotFoundError("Usuario no encontrado");
+  }
+
+  // RN: un admin no puede eliminarse a sí mismo (cierra su propia sesión/consola).
+  if (requester && requester.id === userId) {
+    throw new ForbiddenStatusError(
+      "No puedes eliminar tu propio usuario administrador",
+    );
+  }
+
+  await deleteUserRepository(userId);
+}
+
 module.exports = {
   login,
   registerUser,
   getCurrentUser,
   getMyProfile,
   getAllUsers,
+  updateUser,
+  deleteUser,
   InvalidCredentialsError,
   RoleNotFoundError,
   EmailAlreadyExistsError,
