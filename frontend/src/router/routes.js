@@ -9,7 +9,10 @@ import { AdminView, mountAdminView } from "../views/AdminView.js";
 // import { CoderDashboard, mountCoderDashboard } from "../views/CoderDashboard.js";
 // import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
 // import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
-// import { ProjectDetailView, mountProjectDetailView } from "../views/ProjectDetailView.js";
+import {
+  ProjectDetailView,
+  mountProjectDetailView,
+} from "../views/ProjectDetailView.js";
 // import { PublicProfileView, mountPublicProfileView } from "../views/PublicProfileView.js";
 // import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
 
@@ -42,7 +45,11 @@ export const routes = [
   //   mount: mountRecruiterView,
   //   roles: ["recruiter"],
   // },
-  // { path: "/project/:id", view: ProjectDetailView, mount: mountProjectDetailView },
+  {
+    path: "/project/:id",
+    view: ProjectDetailView,
+    mount: mountProjectDetailView,
+  },
   // { path: "/profile/:username", view: PublicProfileView, mount: mountPublicProfileView },
   // { path: "/gallery", view: GalleryView, mount: mountGalleryView },
 ];
