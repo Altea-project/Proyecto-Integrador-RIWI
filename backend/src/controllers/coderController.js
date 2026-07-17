@@ -42,4 +42,15 @@ async function getCoderProfile(req, res) {
     }
 }
 
-module.exports = { searchCoders, getCoderProfile };
+// TL Dashboard — GET /coders/mine: coders a cargo del TL autenticado.
+async function getMyCoders(req, res) {
+    try {
+    const coders = await coderService.getMyCoders(req.user.id);
+    return res.status(200).json(coders);
+    } catch (err) {
+    console.error('Error en getMyCoders:', err);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+}
+
+module.exports = { searchCoders, getCoderProfile, getMyCoders };

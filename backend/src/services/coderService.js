@@ -60,4 +60,20 @@ async function getCoderProfile(coderId) {
     return { ...coder, skills, projects };
 }
 
-module.exports = { searchCoders, getCoderProfile, InvalidSkillsError, CoderNotFoundError };
+// ------------------------------------------------------------
+// TL Dashboard — Coders a cargo del TL autenticado. El tlId viene del
+// token (req.user.id), nunca de la URL (CA-01).
+// ------------------------------------------------------------
+async function getMyCoders(tlId) {
+    const rows = await coderRepository.findCodersByTl(tlId);
+    return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        avatarUrl: row.avatar_url,
+        availabilityStatus: row.availability_status,
+        avgScore: row.avg_score !== null ? Number(row.avg_score) : null,
+        projectCount: Number(row.project_count),
+    }));
+}
+
+module.exports = { searchCoders, getCoderProfile, getMyCoders, InvalidSkillsError, CoderNotFoundError };
