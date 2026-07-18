@@ -1,4 +1,3 @@
-
 // Este archivo contiene la configuración de la base de datos para conectarse a Supabase
 
 const { Pool } = require('pg');
@@ -6,7 +5,10 @@ require('dotenv').config();
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // requerido por Supabase
+    ssl: { rejectUnauthorized: false }, // requerido por Supabase
+    // Si en 10s no logra conectarse, falla con un error claro en vez de
+    // quedarse colgado para siempre. Así se ve la causa real en la terminal.
+    connectionTimeoutMillis: 10000,
 });
 
 pool.on('connect', () => {
