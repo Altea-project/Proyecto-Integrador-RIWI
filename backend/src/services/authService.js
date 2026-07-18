@@ -426,10 +426,19 @@ async function changeAvailabilityStatus(requester, targetUserId, status) {
  * @throws {EmailAlreadyExistsError} Si el email ya está en uso por otro usuario (409).
  * @throws {DocumentAlreadyExistsError} Si el document ya está en uso por otro usuario (409).
  */
-async function updateUser(userId, { name, email, role, phone, document, company }) {
+async function updateUser(userId, { name, email, role, phone, document, company }, requester) {
   const existingUser = await findUserByIdFull(userId);
   if (!existingUser) {
     throw new UserNotFoundError("Usuario no encontrado");
+  }
+
+  // RN: Si no es admin, debe ser el TL asignado a ese coder.
+  if (requester && requester.roleName !== "admin") {
+    if (existingUser.tl_id !== requester.id) {
+      throw new ForbiddenStatusError(
+        "No tienes permiso para editar este usuario",
+      );
+    }
   }
 
   if (!name || !email || !role) {
@@ -514,6 +523,15 @@ async function deleteUser(userId, requester) {
     throw new ForbiddenStatusError(
       "No puedes eliminar tu propio usuario administrador",
     );
+  }
+
+  // RN: Si no es admin, debe ser el TL asignado a ese coder.
+  if (requester && requester.roleName !== "admin") {
+    if (existingUser.tl_id !== requester.id) {
+      throw new ForbiddenStatusError(
+        "No tienes permiso para eliminar este usuario",
+      );
+    }
   }
 
   await deleteUserRepository(userId);

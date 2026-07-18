@@ -186,7 +186,7 @@ function renderAssignTlModal() {
   });
 }
 // --- COMPONENTE: MODAL DE EDICIÓN (MISMO ESTILO QUE REGISTRO) ---
-function renderEditModal() {
+export function renderEditModal() {
   return Modal({
     id: "modal-edit",
     title: "Reconfigurar Identidad",
@@ -250,7 +250,7 @@ function renderEditModal() {
 }
 
 // --- COMPONENTE: MODAL DE CONFIRMACIÓN DE BORRADO ---
-function renderDeleteModal() {
+export function renderDeleteModal() {
   return Modal({
     id: "modal-delete",
     title: "Eliminar miembro",
@@ -439,7 +439,7 @@ export function AdminView() {
 
 // --- LÓGICA CORE Y HANDLERS (SE MANTIENE IGUAL PERO CON MEJORA UI EN ABIERTOS) ---
 
-function openModal(id) {
+export function openModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
   modal.classList.remove("opacity-0", "invisible");
@@ -451,7 +451,7 @@ function openModal(id) {
   document.body.style.overflow = "hidden";
 }
 
-function hideModal(id) {
+export function hideModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
   const modalBox = modal.querySelector(":scope > div");
@@ -612,7 +612,7 @@ async function handleAssignTl() {
   }
 }
 
-function showFieldError(id, msg) {
+export function showFieldError(id, msg) {
   const el = document.getElementById(id);
   if (el) {
     el.textContent = msg;

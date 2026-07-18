@@ -11,6 +11,10 @@ import { Header, mountHeader } from "../components/Header.js";
 import { showToast } from "../components/Toast.js";
 import { navigate } from "../router/router.js";
 import { apiClient } from "../services/apiClient.js";
+import { userService } from "../services/userService.js";
+import { renderEditModal, renderDeleteModal, openModal, hideModal, showFieldError } from "./AdminView.js";
+import { ROLES } from "../utils/constants.js";
+import { validateForm } from "../utils/validators.js";
 
 // Mapeo estado (BD) -> presentación
 const STATUS_META = {
@@ -96,7 +100,14 @@ function squadRow(c) {
       <td class="py-4 px-4">${statusBadge(c.availabilityStatus)}</td>
       <td class="py-4 px-4">${statusSelect(c.id, c.availabilityStatus)}</td>
       <td class="py-4 px-6 text-right">
-        <span class="text-[10px] text-text-tertiary">ID ${c.id}</span>
+        <div class="flex justify-end gap-2">
+          <button data-action="tl-edit-user" data-user-id="${c.id}" class="p-2 rounded-xl bg-white/5 border border-border-default text-text-tertiary hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90" title="Editar Coder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </button>
+          <button data-action="tl-delete-user" data-user-id="${c.id}" data-user-name="${c.name}" class="p-2 rounded-xl bg-[#EF4444]/5 border border-[#EF4444]/10 text-text-tertiary hover:text-white hover:bg-[#EF4444] hover:border-[#EF4444]/40 transition-all active:scale-90" title="Eliminar Coder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </div>
       </td>
     </tr>`;
 }
@@ -173,14 +184,207 @@ export function TLDashboard() {
         <div class="overflow-x-auto">
           <table class="w-full text-left">
             <thead class="border-b border-border-default"><tr class="text-[10px] font-black text-[#8044F0] tracking-[0.2em] uppercase">
-              <th class="py-4 px-6">Coder</th><th class="py-4 px-4">Puntaje Prom.</th><th class="py-4 px-4">Estado</th><th class="py-4 px-4">Cambiar Estado</th><th class="py-4 px-6 text-right">ID</th>
+              <th class="py-4 px-6">Coder</th><th class="py-4 px-4">Puntaje Prom.</th><th class="py-4 px-4">Estado</th><th class="py-4 px-4">Cambiar Estado</th><th class="py-4 px-6 text-right">Acciones</th>
             </tr></thead>
             <tbody id="tl-squad-body" class="divide-y divide-border-default/40">${loadingRow(5)}</tbody>
           </table>
         </div>
       </section>
     </main>
+
+    ${renderEditModal()}
+    ${renderDeleteModal()}
   `;
+}
+
+let tlSelectedUser = null;
+let tlUserToDelete = null;
+
+const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+
+async function refreshSquad() {
+  try {
+    const squad = await apiClient.get("/coders/mine");
+    const coders = Array.isArray(squad) ? squad : [];
+    const squadBody = document.getElementById("tl-squad-body");
+    if (squadBody) {
+      squadBody.innerHTML = coders.length
+        ? coders.map(squadRow).join("")
+        : `<tr><td colspan="5" class="py-8 px-6 text-center text-xs text-text-tertiary">No tienes coders asignados todavía.</td></tr>`;
+    }
+    setText("squad-count", coders.length);
+
+    const disp = coders.filter((c) => c.availabilityStatus === "available").length;
+    const conv = coders.filter((c) => c.availabilityStatus === "in_conversation").length;
+    const empl = coders.filter((c) => c.availabilityStatus === "unavailable").length;
+    setText("squad-disp", disp);
+    setText("squad-conv", conv);
+    setText("squad-empl", empl);
+
+    const scores = coders.filter((c) => c.avgScore != null).map((c) => c.avgScore);
+    const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : "—";
+    setHTML("kpi-avg", `${avg}<span class="text-lg text-text-tertiary">/100</span>`);
+    setText("kpi-squad", coders.length);
+
+    const tasa = coders.length ? Math.round((empl / coders.length) * 100) : 0;
+    setText("kpi-hire", `${tasa}%`);
+    setText("kpi-hire-sub", `${empl} de ${coders.length} coders`);
+
+    bindSquadEvents();
+  } catch (err) {
+    showToast("No se pudo refrescar la tabla.", "error");
+  }
+}
+
+function bindSquadEvents() {
+  document.querySelectorAll("[data-evaluate]").forEach((btn) => {
+    btn.removeEventListener("click", btn._evaluateHandler);
+    btn._evaluateHandler = () => navigate(`/project/${btn.dataset.evaluate}`);
+    btn.addEventListener("click", btn._evaluateHandler);
+  });
+
+  document.querySelectorAll("[data-status-select]").forEach((sel) => {
+    sel.removeEventListener("change", sel._statusHandler);
+    sel._statusHandler = async (e) => {
+      const coderId = e.target.dataset.coderId;
+      const status = e.target.value;
+      try {
+        await apiClient.patch(`/users/${coderId}/status`, { status });
+        showToast("Estado actualizado.", "success");
+        const badgeCell = e.target.closest("tr")?.querySelector("td:nth-child(3)");
+        if (badgeCell) badgeCell.innerHTML = statusBadge(status);
+      } catch (err) {
+        showToast(err.body?.error || "No se pudo cambiar el estado.", "error");
+      }
+    };
+    sel.addEventListener("change", sel._statusHandler);
+  });
+
+  document.querySelectorAll("[data-action='tl-edit-user']").forEach((btn) => {
+    btn.removeEventListener("click", btn._editHandler);
+    btn._editHandler = async (e) => {
+      const id = Number(e.currentTarget.dataset.userId);
+      try {
+        const res = await apiClient.get(`/users/${id}`);
+        tlSelectedUser = res.data.user;
+        openEditModal();
+      } catch (err) {
+        showToast("No se pudo cargar la información del coder.", "error");
+      }
+    };
+    btn.addEventListener("click", btn._editHandler);
+  });
+
+  document.querySelectorAll("[data-action='tl-delete-user']").forEach((btn) => {
+    btn.removeEventListener("click", btn._deleteHandler);
+    btn._deleteHandler = (e) => {
+      const id = Number(e.currentTarget.dataset.userId);
+      const name = e.currentTarget.dataset.userName;
+      tlUserToDelete = { id, name };
+      openModal("modal-delete");
+    };
+    btn.addEventListener("click", btn._deleteHandler);
+  });
+}
+
+function openEditModal() {
+  document.getElementById("edit-name").value = tlSelectedUser.name || "";
+  document.getElementById("edit-email").value = tlSelectedUser.email || "";
+  document.getElementById("edit-phone").value = tlSelectedUser.phone || "";
+  document.getElementById("edit-document").value = tlSelectedUser.document || "";
+  document.getElementById("edit-role").value = tlSelectedUser.roleName || "";
+  document.getElementById("edit-company").value = tlSelectedUser.company || "";
+
+  const companyField = document.getElementById("edit-company-field");
+  if (tlSelectedUser.roleName === ROLES.RECRUITER) {
+    companyField.classList.remove("hidden");
+    requestAnimationFrame(() => {
+      companyField.classList.add("max-h-[200px]", "opacity-100");
+      companyField.classList.remove("max-h-0", "opacity-0");
+    });
+  } else {
+    companyField.classList.add("hidden", "opacity-0");
+  }
+
+  document.querySelectorAll("#edit-form [id$='-error']").forEach((el) => el.classList.add("hidden"));
+  const formError = document.getElementById("edit-form-error");
+  if (formError) formError.classList.add("hidden");
+
+  openModal("modal-edit");
+}
+
+async function handleTlEditUser() {
+  document.querySelectorAll("#edit-form [id$='-error']").forEach((el) => el.classList.add("hidden"));
+
+  const payload = {
+    name: document.getElementById("edit-name")?.value.trim(),
+    email: document.getElementById("edit-email")?.value.trim(),
+    role: document.getElementById("edit-role")?.value,
+    phone: document.getElementById("edit-phone")?.value.trim() || undefined,
+    document: document.getElementById("edit-document")?.value.trim() || undefined,
+    company: document.getElementById("edit-role")?.value === ROLES.RECRUITER
+      ? document.getElementById("edit-company")?.value.trim()
+      : undefined,
+  };
+
+  let valid = true;
+  if (!payload.name) {
+    showFieldError("edit-name-error", "La firma es obligatoria.");
+    valid = false;
+  }
+  if (!payload.role) {
+    showFieldError("edit-role-error", "El nivel de sistema es requerido.");
+    valid = false;
+  }
+  const { valid: emailOk, errors } = validateForm({ email: payload.email });
+  if (!emailOk) {
+    showFieldError("edit-email-error", errors.email);
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  const btn = document.getElementById("edit-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "SINCRONIZANDO...";
+
+  try {
+    await userService.updateUser(tlSelectedUser.id, payload);
+    hideModal("modal-edit");
+    showToast("CODER ACTUALIZADO CON ÉXITO.", "success");
+    await refreshSquad();
+  } catch (error) {
+    const msg = error.body?.error || "Falla en la red del ledger.";
+    showToast(msg, "error");
+    const errEl = document.getElementById("edit-form-error");
+    errEl.textContent = msg;
+    errEl.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "GUARDAR CAMBIOS";
+  }
+}
+
+async function handleTlDeleteUser() {
+  if (!tlUserToDelete) return;
+
+  const btn = document.getElementById("delete-confirm-btn");
+  btn.disabled = true;
+  btn.textContent = "DELETING...";
+
+  try {
+    await userService.deleteUser(tlUserToDelete.id);
+    hideModal("modal-delete");
+    showToast("CODER ELIMINADO DE ALTEA.", "error");
+    tlUserToDelete = null;
+    await refreshSquad();
+  } catch (error) {
+    const msg = error.body?.error || "No se pudo eliminar el coder.";
+    showToast(msg, "error");
+    btn.disabled = false;
+    btn.textContent = "Eliminar";
+  }
 }
 
 // --- MOUNT (trae datos reales y liga eventos) ---
@@ -189,9 +393,6 @@ export async function mountTLDashboard() {
 
   const pendingBody = document.getElementById("tl-pending-body");
   const squadBody = document.getElementById("tl-squad-body");
-
-  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
 
   try {
     const [squad, pendResp] = await Promise.all([
@@ -232,26 +433,14 @@ export async function mountTLDashboard() {
     setText("kpi-hire", `${tasa}%`);
     setText("kpi-hire-sub", `${empl} de ${coders.length} coders`);
 
-    // --- eventos ---
-    document.querySelectorAll("[data-evaluate]").forEach((btn) => {
-      btn.addEventListener("click", () => navigate(`/project/${btn.dataset.evaluate}`));
+    bindSquadEvents();
+
+    document.querySelectorAll("[data-modal-close]").forEach((el) => {
+      el.addEventListener("click", () => hideModal(el.dataset.modalClose));
     });
 
-    document.querySelectorAll("[data-status-select]").forEach((sel) => {
-      sel.addEventListener("change", async (e) => {
-        const coderId = e.target.dataset.coderId;
-        const status = e.target.value;
-        try {
-          await apiClient.patch(`/users/${coderId}/status`, { status });
-          showToast("Estado actualizado.", "success");
-          // refresca el badge de la fila
-          const badgeCell = e.target.closest("tr")?.querySelector("td:nth-child(3)");
-          if (badgeCell) badgeCell.innerHTML = statusBadge(status);
-        } catch (err) {
-          showToast(err.body?.error || "No se pudo cambiar el estado.", "error");
-        }
-      });
-    });
+    document.getElementById("edit-submit-btn")?.addEventListener("click", handleTlEditUser);
+    document.getElementById("delete-confirm-btn")?.addEventListener("click", handleTlDeleteUser);
   } catch (err) {
     const msg = err.status === 401 ? "Tu sesión expiró. Inicia sesión de nuevo." : "No se pudieron cargar los datos del dashboard.";
     if (pendingBody) pendingBody.innerHTML = `<tr><td colspan="6" class="py-8 px-6 text-center text-xs text-state-error">${msg}</td></tr>`;

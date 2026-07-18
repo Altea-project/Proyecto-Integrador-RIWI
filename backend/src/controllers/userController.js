@@ -284,6 +284,31 @@ async function getPublicProfile(req, res, next) {
  * - 409: el email o el document ya están en uso por otro usuario
  * - 500: error inesperado -> delega al manejador de errores centralizado
  */
+async function getUserById(req, res, next) {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "El id del usuario no es válido",
+      });
+    }
+
+    const user = await authService.getMyProfile(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: { user },
+    });
+  } catch (error) {
+    if (error instanceof authService.UserNotFoundError) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+
+    next(error);
+  }
+}
+
 async function updateUserController(req, res, next) {
   try {
     const userId = Number(req.params.id);
@@ -303,7 +328,7 @@ async function updateUserController(req, res, next) {
       phone,
       document,
       company,
-    });
+    }, req.user);
 
     return res.status(200).json({
       success: true,
@@ -376,4 +401,5 @@ module.exports = {
   getPublicProfile,
   updateUserController,
   deleteUserController,
+  getUserById,
 };

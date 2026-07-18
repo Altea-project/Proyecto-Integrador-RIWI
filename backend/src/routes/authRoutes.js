@@ -17,6 +17,7 @@ const {
   getPublicProfile,
   updateUserController,
   deleteUserController,
+  getUserById,
 } = require("../controllers/userController");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
@@ -72,26 +73,38 @@ router.patch(
 );
 router.get("/users/:id/public", verifyToken, getPublicProfile);
 
-// PATCH /users/:id — HU-01 (edición por admin): actualiza name, email,
+// GET /users/:id — Obtiene los datos completos de un usuario por su ID.
+// Accesible para admin e instructor (TL), usado para pre-cargar el modal
+// de edición en los dashboards.
+router.get(
+  "/users/:id",
+  verifyToken,
+  requireRole("admin", "instructor"),
+  getUserById,
+);
+
+// PATCH /users/:id — HU-01 (edición por admin/instructor): actualiza name, email,
 // phone, document, role y company (solo recruiter) de un usuario. Se
 // registra DESPUÉS de las rutas más específicas (/users/:id/assign-tl y
 // /users/:id/status) para que no las intercepte. Nunca permite tocar
 // password, id, created_at ni datos de autenticación (ver authService.updateUser).
+// El service valida que un instructor solo pueda editar coders de su squad.
 router.patch(
   "/users/:id",
   verifyToken,
-  requireRole("admin"),
+  requireRole("admin", "instructor"),
   updateUserController,
 );
 
-// DELETE /users/:id — HU-01 (borrado por admin): elimina un usuario.
-// Solo admin. El service bloquea eliminarse a sí mismo (403) y usuarios
-// inexistentes (404). Se registra al final de las rutas /users/:id/* para
+// DELETE /users/:id — HU-01 (borrado por admin/instructor): elimina un usuario.
+// Solo admin o instructor (TL de ese coder). El service bloquea eliminarse a
+// sí mismo (403) y usuarios inexistentes (404). Instructores solo pueden
+// eliminar coders de su squad. Se registra al final de las rutas /users/:id/* para
 // no colisionar con las anteriores.
 router.delete(
   "/users/:id",
   verifyToken,
-  requireRole("admin"),
+  requireRole("admin", "instructor"),
   deleteUserController,
 );
 

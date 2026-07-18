@@ -251,8 +251,8 @@ async function updateUserTl(userId, tlId) {
 async function findUserByIdFull(id) {
     const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.phone, u.document, u.company,
-            u.role_id, r.name AS role_name, u.must_change_password,
-            u.created_at, u.updated_at
+            u.role_id, r.name AS role_name, u.tl_id,
+            u.must_change_password, u.created_at, u.updated_at
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.id = $1`,
