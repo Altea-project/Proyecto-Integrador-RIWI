@@ -93,9 +93,6 @@ export function LoginView() {
                 <label for="password" class="font-body font-semibold text-xs text-text-primary uppercase tracking-wide">
                   Contraseña
                 </label>
-                <a href="/forgot-password" data-nav class="font-body font-medium text-sm text-brand-primary-light hover:text-brand-primary transition-colors duration-200">
-                  ¿Olvidaste tu contraseña?
-                </a>
               </div>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-tertiary">

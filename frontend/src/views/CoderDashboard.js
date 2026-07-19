@@ -365,14 +365,6 @@ function renderFullDashboard() {
                  <span class="text-[10px] text-purple-400 tracking-[0.1em] uppercase font-bold mt-0.5">Senior Team Lead</span>
                </div>
             </div>
-            <div class="flex items-center gap-2.5 mt-8 py-2.5 px-4 rounded-xl bg-[#00f5a0]/5 border border-[#00f5a0]/10">
-               <span class="relative flex h-2 w-2">
-                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f5a0] opacity-75"></span>
-                 <span class="relative inline-flex rounded-full h-2 w-2 bg-[#00f5a0]"></span>
-               </span>
-               <span class="text-[9px] font-bold text-[#00f5a0] uppercase tracking-widest">Activo hace un momento</span>
-            </div>
-            <button class="w-full mt-6 py-4 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] hover:bg-white/[0.08] hover:text-white transition-all active:scale-95">Solicitar Revisión</button>
          </div>
       </aside>
     </div>
