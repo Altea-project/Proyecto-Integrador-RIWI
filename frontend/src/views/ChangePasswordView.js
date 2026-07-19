@@ -24,7 +24,7 @@ function eyeOffIcon() {
 
 const ROLE_ROUTES = {
   admin: "/admin",
-  coder: "/coder",
+  coder: "/dashboard",
   instructor: "/tl",
   recruiter: "/recruiter",
 };

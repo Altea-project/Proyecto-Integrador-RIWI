@@ -88,19 +88,44 @@ async function createProjectWithSkills(project, skillIds = []) {
 }
 
 async function findProjectsByCoderId(coderId) {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, coder_id, title, description, image_url, repo_url, is_external, created_at, updated_at
-       FROM projects
-       WHERE coder_id = $1
-       ORDER BY created_at DESC`,
-      [coderId],
-    );
-    return rows;
-  } catch (error) {
-    console.error("ERROR REAL DE LA QUERY:", error.message);
-    throw error;
-  }
+  const { rows } = await pool.query(
+    `SELECT
+        p.id, p.coder_id, p.title, p.description, p.image_url,
+        p.repo_url, p.is_external, p.created_at, p.updated_at,
+        g.score, g.comment, g.starred,
+        instructor.name AS graded_by_name,
+        COALESCE(
+          json_agg(DISTINCT jsonb_build_object('id', s.id, 'name', s.name))
+          FILTER (WHERE s.id IS NOT NULL), '[]'
+        ) AS skills
+      FROM projects p
+      LEFT JOIN gradings g ON g.project_id = p.id
+      LEFT JOIN users instructor ON instructor.id = g.instructor_id
+      LEFT JOIN project_skills ps ON ps.project_id = p.id
+      LEFT JOIN skills s ON s.id = ps.skill_id
+      WHERE p.coder_id = $1
+      GROUP BY p.id, g.score, g.comment, g.starred, instructor.name
+      ORDER BY p.created_at DESC`,
+    [coderId],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    coder_id: row.coder_id,
+    title: row.title,
+    description: row.description,
+    image_url: row.image_url,
+    repo_url: row.repo_url,
+    is_external: row.is_external,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    graded: row.score !== null,
+    score: row.score,
+    comment: row.comment,
+    starred: row.starred || false,
+    gradedBy: row.graded_by_name ? { name: row.graded_by_name } : null,
+    skills: row.skills,
+  }));
 }
 
 module.exports = {
