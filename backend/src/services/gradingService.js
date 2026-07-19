@@ -1,10 +1,6 @@
-// ============================================================
-// gradingService.js
-// Lógica de negocio de las calificaciones (HU-06).
-// No conoce req/res ni ejecuta SQL directo (eso es del repository).
-// Regla central: un instructor solo puede calificar/actualizar
-// proyectos de coders que tenga asignados como TL.
-// ============================================================
+/* Lógica de negocio de las calificaciones. No conoce req/res ni ejecuta SQL. 
+Regla central: un instructor solo puede calificar/actualizar proyectos de coders que tenga asignados como TL.
+*/
 
 const {
   findProjectOwnerTl,
@@ -18,23 +14,18 @@ class ValidationError extends Error {}         // datos inválidos -> 400
 class NotFoundError extends Error {}           // proyecto/calificación no existe -> 404
 class ForbiddenGradingError extends Error {}   // el instructor no es el TL del coder -> 403
 
-// El score debe ser un entero entre 0 y 100 (ver CHECK en schema.sql).
+// El score tiene que ser un entero entre 0 y 100 (igual que el CHECK del schema).
 function validateScore(score) {
   if (!Number.isInteger(score) || score < 0 || score > 100) {
     throw new ValidationError("El score debe ser un número entero entre 0 y 100");
   }
 }
 
-/**
- * T2 (issue #80) — POST /gradings.
- * Un instructor califica el proyecto de uno de SUS coders. Valida que
- * el instructor autenticado sea el TL del coder dueño del proyecto.
- * Si el proyecto ya tenía calificación, se sobreescribe (UPSERT, CA-02).
- *
- * @param {number} instructorId - Id del instructor autenticado (del token).
- * @param {Object} data - { projectId, score, comment?, starred? }
- * @returns {Promise<Object>} La calificación creada/actualizada.
- */
+/* POST /gradings.
+Un instructor califica el proyecto de uno de SUS coders. 
+Valida que el instructor logueado sea el TL del coder dueño del proyecto. 
+Si el proyecto ya tenía calificación, se sobreescribe
+*/
 async function createGrading(instructorId, { projectId, score, comment, starred }) {
   if (!projectId) {
     throw new ValidationError("projectId es obligatorio");
@@ -46,7 +37,7 @@ async function createGrading(instructorId, { projectId, score, comment, starred 
     throw new NotFoundError("El proyecto no existe");
   }
 
-  // Validación central (CA-01): solo el TL asignado al coder puede calificar.
+  // CA-01: solo el TL asignado al coder puede calificar..
   if (project.tl_id !== instructorId) {
     throw new ForbiddenGradingError(
       "Solo el instructor asignado (TL) al coder puede calificar este proyecto",
@@ -57,16 +48,9 @@ async function createGrading(instructorId, { projectId, score, comment, starred 
   return mapGrading(grading);
 }
 
-/**
- * T3 (issue #81) — PATCH /gradings/:id.
- * Actualiza una calificación existente. Mismo permiso que la T2: solo el
- * TL del coder dueño del proyecto puede modificarla.
- *
- * @param {number} instructorId - Id del instructor autenticado.
- * @param {number} gradingId - Id de la calificación a actualizar.
- * @param {Object} data - { score?, comment?, starred? } (parcial)
- * @returns {Promise<Object>} La calificación actualizada.
- */
+// PATCH /gradings/:id.
+// Actualiza una calificación. Mismo permiso que crear: solo el TL del coder dueño del proyecto puede modificarla.
+
 async function updateGradingById(instructorId, gradingId, { score, comment, starred }) {
   if (score !== undefined) validateScore(score);
 

@@ -1,8 +1,6 @@
-// ============================================================
-// skillRepository.js
-// Acceso a la tabla skills. Solo lectura: devuelve el catalogo de
-// tecnologias para poblar los selectores del frontend (HU-03 - T3).
-// ============================================================
+
+// Acceso a la tabla skills. Solo lectura: devuelve el catálogo de tecnologías para llenar los selectores del frontend (HU-03 - T3).
+
 const pool = require("../config/db");
 
 // Devuelve todas las skills (id, name) ordenadas por nombre.
