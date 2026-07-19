@@ -38,15 +38,10 @@ export function Header({ extraClasses = "" } = {}) {
             </div>
             <input 
               type="text" 
-              placeholder="Explorar conocimiento..." 
+              placeholder="Búsqueda global — Próximamente" 
               class="h-9 w-full rounded-xl border border-border-default bg-[#161B26]/30 pl-10 pr-12 text-[11px] text-text-primary outline-none transition-all focus:border-[#8044F0]/50 focus:ring-4 focus:ring-[#8044F0]/5 placeholder:text-text-tertiary placeholder:uppercase placeholder:tracking-tighter"
               disabled
             />
-            <div class="absolute inset-y-0 right-2 flex items-center">
-              <kbd class="hidden sm:inline-flex h-5 items-center rounded-md border border-border-default px-1.5 font-mono text-[9px] font-black text-text-tertiary bg-[#0B0E14]">
-                CMD K
-              </kbd>
-            </div>
           </div>
         </div>
 

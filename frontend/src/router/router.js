@@ -1,5 +1,6 @@
 import { routes } from "./routes.js";
 import { getUser } from "../state/store.js";
+import { homeForRole } from "../utils/navigation.js";
 
 function matchRoute(path) {
   const pathSegments = path.split("/").filter(Boolean);
@@ -48,13 +49,23 @@ function render() {
   if (!match) return;
 
   const { route, params } = match;
+  const user = getUser();
 
-  if (!isAuthorized(route)) {
-    navigate("/login");
+  // Rutas solo-invitado (ej. /login): si ya hay sesión, se manda al
+  // dashboard del rol en vez de mostrar el login otra vez (cubre el caso
+  // de escribir /login a mano estando logueado).
+  if (route.guestOnly && user) {
+    navigate(homeForRole(user.roleName));
     return;
   }
 
-  const user = getUser();
+  if (!isAuthorized(route)) {
+    // Sin sesión -> al login. Con sesión pero rol equivocado (ej. un coder
+    // abriendo /admin) -> a su propio home, no al login: ya está autenticado.
+    navigate(user ? homeForRole(user.roleName) : "/login");
+    return;
+  }
+
   const isChangePasswordFlow = path === "/change-password";
   if (user && user.mustChangePassword && !isChangePasswordFlow) {
     navigate("/change-password");

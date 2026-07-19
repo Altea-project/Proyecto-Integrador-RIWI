@@ -22,7 +22,22 @@ const skillRoutes = require('./routes/skillRoutes'); // HU-03 - T3: GET /skills 
 const app = express();
 
 // Middlewares globales
-app.use(cors()); // Permite que el frontend (otro origen/puerto) consuma la API.
+// CORS: en desarrollo se permite cualquier puerto de localhost (Vite suele
+// usar 5173); en producción se restringe al dominio del frontend definido en
+// la variable FRONTEND_URL. Antes estaba abierto a cualquier origen.
+const isLocalhost = (origin) =>
+    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin) return callback(null, true); // Postman/curl -> permitido
+        if (isLocalhost(origin)) return callback(null, true);
+        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origen no permitido por CORS'));
+    },
+}));
 app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.body
 
 // Rutas
