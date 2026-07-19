@@ -243,6 +243,17 @@ async function getPublicProfile(req, res, next) {
     const userId = Number(req.params.id);
     const user = await authService.getMyProfile(userId);
 
+    // El perfil público es el del CODER (HU-13). Si el id corresponde a
+    // otro rol (admin, instructor, recruiter), no hay perfil público que
+    // mostrar -> 404. Evita que la página de perfil de coder se renderice
+    // con datos de un no-coder.
+    if (!user || user.roleName !== "coder") {
+      return res.status(404).json({
+        success: false,
+        error: "Perfil no encontrado.",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       data: {
