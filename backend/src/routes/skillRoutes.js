@@ -1,8 +1,5 @@
-// ============================================================
-// skillRoutes.js
-// Ruta del catalogo de skills. Solo GET, protegida con verifyToken
-// (cualquier usuario autenticado puede necesitar la lista). HU-03 - T3.
-// ============================================================
+// Ruta del catálogo de skills. Solo GET, protegida con verifyToken (cualquier usuario logueado puede necesitar la lista). 
+
 const express = require("express");
 const router = express.Router();
 

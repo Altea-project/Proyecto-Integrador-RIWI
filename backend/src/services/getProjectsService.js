@@ -1,28 +1,14 @@
-// ============================================================
-// getProjectsService.js
-// HU-12 · T1 — GET /projects (galería de proyectos).
-//
-// Archivo INDEPENDIENTE de projectService.js a propósito (ver nota en
-// getProjectsRepository.js): esta feature no comparte código con
-// createProject, solo comparte la tabla "projects".
-//
-// Lógica de negocio: traduce las filas crudas del repository a un
-// shape de negocio (camelCase) listo para el frontend. NO conoce
-// req/res (responsabilidad del controller) ni ejecuta queries SQL
-// directas (responsabilidad del repository).
-// ============================================================
+/* GET /projects (galería de proyectos) 
+Es un archivo aparte de projectService.js a propósito: no comparte código con crear proyecto, solo la tabla "projects"
+Su trabajo: pasar las filas crudas del repository a camelCase para el front. No conoce req/res ni ejecuta SQL
+*/
 
 const { findAllForGallery, findPendingByTl } = require("../repositories/getProjectsRepository");
 
-/**
- * (T1 - HU-12) Abrevia el nombre del TL/instructor calificador para la
- * card de la galería (CA-01: "nombre abreviado del TL calificador").
- * "Juan Pérez López" -> "Juan P." (primer nombre + inicial del último
- * apellido). Si el nombre trae una sola palabra, se devuelve tal cual.
- *
- * @param {string|null} fullName
- * @returns {string|null}
- */
+//Abrevia el nombre del TL calificador para la card de la galería.
+/* "Juan Pérez López" -> "Juan P." (primer nombre + inicial del último apellido). 
+Si el nombre es una sola palabra, lo devuelvo tal cual. */
+
 function abbreviateName(fullName) {
   if (!fullName) return null;
 
@@ -34,26 +20,18 @@ function abbreviateName(fullName) {
   return `${firstName} ${lastInitial}.`;
 }
 
-/**
- * (T1 - HU-12) Arma la galería de proyectos para cualquier usuario
- * autenticado.
- *
- * Traduce las filas crudas del repository (snake_case, con nulls
- * cuando el proyecto no tiene calificación) a un shape de negocio
- * (camelCase) que el frontend puede consumir directamente:
- * - coderName: nombre del coder dueño del proyecto (en vez de exponer
- *   su coder_id crudo, ya viene resuelto por el JOIN a "users").
- * - graded: boolean -> soporta el badge "Sin calificar" (CA-02).
- * - score/starred: null/false cuando el proyecto no ha sido calificado,
- *   para no filtrar un "score: 0" falso ni un "starred: true" fantasma.
- * - gradedBy: null si no hay calificación; si la hay, incluye el
- *   nombre completo y la versión abreviada (CA-01).
- *
- * El orden ya viene resuelto desde la query (RN-04); este método NO
- * reordena nada.
- *
- * @returns {Promise<Object[]>} Proyectos listos para la galería.
- */
+
+// Arma la galería de proyectos para cualquier usuario logueado.
+// Pasa las filas crudas (snake_case, con nulls cuando no hay calificación) a
+// camelCase para el front:
+// - coderName: nombre del coder dueño (ya resuelto por el JOIN).
+// - graded: boolean, para el badge "Sin calificar".
+// - score/starred: null/false cuando no está calificado (para no mostrar un
+//   score 0 falso ni una estrella fantasma).
+// - gradedBy: null si no hay calificación; si la hay, nombre completo y
+//   abreviado.
+// El orden ya viene de la query (RN-04); acá no reordeno nada.
+
 async function getGalleryProjects() {
   const rows = await findAllForGallery();
 

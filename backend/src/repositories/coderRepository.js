@@ -1,17 +1,12 @@
 
-// Capa de acceso a datos: solo SQL, sin lógica de negocio.
-// A diferencia de interestRepository, aquí no se recibe `client` de una
-// transacción porque esta es una única consulta de LECTURA: no hay nada
-// que deba revertirse si algo falla, así que usa el `pool` directamente.
+// Capa de acceso a datos de coders: solo SQL, sin lógica de negocio.
+// Acá no recibo el `client` de una transacción (como sí hace interestRepository)
+// porque estas son solo consultas de LECTURA: no hay nada que revertir, así que uso el `pool` directamente.
 
 const pool = require('../config/db');
 
-// ------------------------------------------------------------
-// HU-08 · T1 — Busca coders que tengan al menos una de las
-// habilidades pedidas, excluyendo a los 'unavailable' (RN-09).
-// Devuelve el puntaje promedio y si tienen algún proyecto con
-// estrella, para que el service pueda aplicar el orden (RN-05).
-// ------------------------------------------------------------
+// HU-08 - Busca coders que tengan al menos una de las skills pedidas, dejando fuera a los 'unavailable' (RN-09). 
+// Devuelve el puntaje promedio y si tienen algún proyecto con estrella, para que el service ordene (RN-05).
 async function searchBySkills(skillIds) {
     const query = `
         WITH matched_projects AS (
@@ -60,16 +55,13 @@ async function searchBySkills(skillIds) {
 }
 
 
-// ------------------------------------------------------------
-// HU-13 · T1 — Perfil público del coder.
-// Se divide en 3 consultas pequeñas (en vez de un solo JOIN
-// gigante) para no tener que des-duplicar filas en JS: un solo
-// JOIN entre projects y project_skills generaría una fila por
-// cada combinación proyecto×skill.
-// ------------------------------------------------------------
+// HU-13 - Perfil público del coder.
+// Lo parto en 3 consultas chicas en vez de un JOIN gigante para no tener que
+// des-duplicar filas en JS: un JOIN entre projects y project_skills devolvería
+// una fila por cada combinación proyecto x skill.
 
-// Datos básicos del coder. Devuelve undefined si no existe o si
-// el id pertenece a un usuario que no tiene rol 'coder'.
+// Datos básicos del coder. Devuelve undefined si no existe o si el id es de un
+// usuario que no es 'coder'.
 async function findCoderById(coderId) {
     const query = `
         SELECT u.id, u.name, u.avatar_url, u.availability_status
@@ -81,9 +73,7 @@ async function findCoderById(coderId) {
     return rows[0];
 }
 
-// Habilidades derivadas: unión de las skills de todos los
-// proyectos del coder. No existe tabla user_skills en el MVP
-// (PDR 3.2, notas de modelado).
+// Skills del coder: la unión de las skills de todos sus proyectos. En el MVP no hay tabla user_skills (ver notas del PDR 3.2).
 async function findSkillsByCoderId(coderId) {
     const query = `
         SELECT DISTINCT sk.id, sk.name
@@ -96,9 +86,9 @@ async function findSkillsByCoderId(coderId) {
     return rows;
 }
 
-// Proyectos del coder con su calificación (si la tienen). LEFT
-// JOIN para que los proyectos sin calificar también aparezcan
-// (con score/starred en null), igual que en la galería (HU-12).
+// Proyectos del coder con su calificación (si la tienen). 
+// Uso LEFT JOIN para que los proyectos sin calificar también salgan (score/starred en null),
+// igual que en la galería (HU-12).
 async function findProjectsByCoderId(coderId) {
     const query = `
         SELECT
@@ -113,14 +103,9 @@ async function findProjectsByCoderId(coderId) {
     return rows;
 }
 
-// ------------------------------------------------------------
-// TL Dashboard — Lista los coders a cargo de un TL (tl_id = $1), con su
-// puntaje promedio (AVG de las calificaciones de sus proyectos) y la
-// cantidad de proyectos. LEFT JOIN a projects/gradings para que un coder
-// sin proyectos o sin calificar igual aparezca (avg_score null).
-// El JOIN projects->gradings es 1:1 por proyecto (project_id UNIQUE),
-// asi que el AVG no se infla.
-// ------------------------------------------------------------
+// Dashboard del TL - Lista los coders a cargo de un TL (tl_id = $1), con su puntaje promedio y su cantidad de proyectos. 
+// LEFT JOIN a projects/gradings para que un coder sin proyectos o sin calificar igual aparezca (avg_score null). 
+// Como cada proyecto tiene máximo una calificación (project_id UNIQUE), el AVG no se infla.
 async function findCodersByTl(tlId) {
     const query = `
         SELECT

@@ -1,6 +1,5 @@
 
-// Controller delgado: no toca SQL. Solo lee req/res y traduce los
-// errores de dominio del service a códigos HTTP.
+// Controller de coders. No toca SQL: solo lee req/res y pasa los errores del service a códigos HTTP.
 
 const coderService = require('../services/coderService');
 
@@ -22,9 +21,7 @@ async function searchCoders(req, res) {
 }
 
 
-// ------------------------------------------------------------
-// HU-13 · T1 — GET /coders/:id/profile
-// ------------------------------------------------------------
+// GET /coders/:id/profile - perfil público del coder (HU-13)
 async function getCoderProfile(req, res) {
     try {
     const { id } = req.params;
@@ -42,7 +39,7 @@ async function getCoderProfile(req, res) {
     }
 }
 
-// TL Dashboard — GET /coders/mine: coders a cargo del TL autenticado.
+// GET /coders/mine - los coders a cargo del TL logueado (dashboard del TL).
 async function getMyCoders(req, res) {
     try {
     const coders = await coderService.getMyCoders(req.user.id);

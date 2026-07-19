@@ -1,36 +1,22 @@
 
 
-// ============================================================
-// verifyToken.js
-// Middleware GENÉRICO de autenticación (T3 de HU-00).
-// Su única responsabilidad es: leer el token del header
-// Authorization, validarlo, y adjuntar el usuario decodificado
-// a req.user para que los siguientes middlewares/controllers lo usen.
-//
-// A PROPÓSITO no filtra por rol (ej. "solo Admin"). Ese filtro debe
-// vivir en un middleware aparte que se combine con este, para que
-// verifyToken se pueda reutilizar en CUALQUIER ruta protegida del
-// proyecto (ver ejemplo de combinación al final del archivo).
-// ============================================================
+/* Middleware de autenticación (HU-00 T3).
+Lo único que hace: leer el token del header Authorization, validarlo y dejar el usuario decodificado en req.user para los siguientes middlewares.
+No filtra por rol a propósito. Ese filtro va en otro middleware (requireRole) para poder reusar verifyToken en cualquier ruta protegida. */
 
 const { verifyJwt } = require('../utils/jwt');
 
-/**
- * Middleware de Express. Se coloca antes de cualquier ruta que
- * requiera que el usuario esté autenticado.
- *
- * Flujo:
- * 1. Lee el header "Authorization: Bearer <token>".
- * 2. Si no viene el header o no tiene el formato correcto -> 401.
- * 3. Si el token es inválido o expiró -> 401.
- * 4. Si todo es correcto, adjunta el payload decodificado en
- *    req.user (contiene { id, roleId }) y continúa con next().
- */
+// Se pone antes de cualquier ruta que necesite estar logueado.
+// Pasos:
+// 1. Lee "Authorization: Bearer <token>".
+// 2. Si no viene o el formato está mal -> 401.
+// 3. Si el token es inválido o venció -> 401.
+// 4. Si todo bien, guarda el payload en req.user y sigue con next().
 function verifyToken(req, res, next) {
     const authHeader = req.headers.authorization;
 
-  // El formato esperado es "Bearer <token>". Si no viene o no cumple
-  // ese formato, no hay nada que intentar verificar.
+  // El formato tiene que ser "Bearer <token>". Si no viene así, no hay
+  // nada que verificar.
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
         success: false,
@@ -38,20 +24,17 @@ function verifyToken(req, res, next) {
     });
     }
 
-  // "Bearer abc123..." -> nos quedamos solo con la parte del token.
+  // De "Bearer abc123..." me quedo solo con el token.
     const token = authHeader.split(' ')[1];
 
     try {
     const payload = verifyJwt(token);
 
-    // A partir de aquí, cualquier controller/middleware siguiente en
-    // la cadena puede leer req.user.id y req.user.roleId sin volver
-    // a decodificar el token.
+    // De aca en adelante los controllers pueden leer req.user.id y req.user.roleId sin volver a decodificar el token.
     req.user = payload;
     next();
     } catch (error) {
-    // verifyJwt lanza error si la firma no coincide (token alterado
-    // o firmado con otro secret) o si ya expiró.
+    // verifyJwt tira error si la firma no coincide (token alterado o firmado con otro secret) o si ya venció.
     return res.status(401).json({
         success: false,
         error: 'Token inválido o expirado',
@@ -61,12 +44,11 @@ function verifyToken(req, res, next) {
 
 module.exports = verifyToken;
 
-/**
- * Ejemplo de uso combinado con un filtro de rol (para HU-01-T2,
- * "middleware de autorización solo Admin"):
+/*
+ * Ejemplo de cómo combinarlo con un filtro de rol:
  *
  * function requireAdmin(req, res, next) {
- *   const ADMIN_ROLE_ID = 1; // ajustar según el seed real de la tabla roles
+ *   const ADMIN_ROLE_ID = 1; // según el seed real de la tabla roles
  *   if (req.user.roleId !== ADMIN_ROLE_ID) {
  *     return res.status(403).json({
  *       success: false,
@@ -78,6 +60,6 @@ module.exports = verifyToken;
  *
  * // En la ruta:
  * router.post('/users', verifyToken, requireAdmin, createUser);
- * // verifyToken corre primero (identifica quién es),
- * // requireAdmin corre después (decide si tiene permiso).
+ * // verifyToken corre primero (dice quién es),
+ * // requireAdmin corre después (dice si puede).
  */

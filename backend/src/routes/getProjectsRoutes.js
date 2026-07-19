@@ -1,16 +1,8 @@
-// ============================================================
-// getProjectsRoutes.js
-// HU-12 · T1 — GET /projects (galería de proyectos).
-//
-// Archivo INDEPENDIENTE de projectRoutes.js a propósito (ver nota en
-// getProjectsRepository.js): esta feature no comparte código con
-// createProject, solo comparte el mismo recurso HTTP ("/projects").
-// Ambos routers se montan bajo el mismo prefijo "/api" en app.js, así
-// que para quien consume la API el endpoint sigue siendo el único
-// GET /api/projects de siempre.
-//
-// No contiene lógica propia.
-// ============================================================
+
+// GET /projects (galería de proyectos) 
+/* Es un archivo aparte de projectRoutes.js a propósito: no comparte código con crear proyecto, solo el mismo recurso ("/projects"). 
+Los dos routers se montan bajo "/api", así que para quien consume la API sigue siendo el mismo GET /api/projects de siempre. 
+No tiene lógica propia.*/
 
 const express = require("express");
 const requireRole = require("../middlewares/requireRole");
@@ -19,15 +11,12 @@ const verifyToken = require("../middlewares/verifyToken");
 
 const router = express.Router();
 
-// GET /projects — HU-12 · T1: galería de proyectos, visible para
-// cualquier usuario autenticado (sin restricción de rol, por eso no
-// lleva requireRole). Devuelve todos los proyectos con su calificación
-// (si existe) y el nombre del TL que calificó, ya ordenados según
-// RN-04 (ver getProjectsRepository.findAllForGallery).
+/* GET /projects: galería visible para cualquier usuario logueado (por eso no lleva requireRole). 
+Devuelve todos los proyectos con su calificación (si tienen) y el nombre del TL que calificó, ya ordenados según RN-04. */
+
 router.get("/projects", verifyToken, getProjects);
 
-// GET /projects/pending — TL Dashboard: proyectos sin calificar de los
-// coders del TL autenticado. Solo instructor.
+// GET /projects/pending — dashboard del TL: proyectos sin calificar de sus coders. Solo instructor.
 router.get("/projects/pending", verifyToken, requireRole("instructor"), getPendingProjects);
 
 module.exports = router;

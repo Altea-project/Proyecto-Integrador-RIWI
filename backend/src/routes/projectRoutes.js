@@ -1,9 +1,6 @@
-// ============================================================
-// projectRoutes.js
-// este archivo define las rutas HTTP relacionadas a proyectos y las
-// conecta con su controller correspondiente (projectController).
-// No contiene lógica propia.
-// ============================================================
+
+// Este archivo define las rutas de proyectos y las conecta con projectController.
+// No tiene lógica propia.
 
 const express = require("express");
 const {

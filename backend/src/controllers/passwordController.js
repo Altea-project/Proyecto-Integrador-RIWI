@@ -1,22 +1,20 @@
-// passwordController.js
-// El "traductor" entre la petición HTTP y la lógica del cambio de contraseña.
-// Lee los datos de la petición, llama al service y arma la respuesta según
-// lo que pase. La lógica de verdad está en el service.
+
+// El puente entre la petición HTTP y la lógica del cambio de contraseña.
+// Lee los datos, llama al service y arma la respuesta. La lógica está en el service.
 
 const passwordService = require('../services/passwordService');
 
-// PATCH /change-password  (ruta protegida: antes corre verifyToken).
-// El usuario llega aquí después de loguearse con su contraseña temporal.
-// Body esperado: { newPassword, confirmPassword }
+// PATCH /change-password (ruta protegida: antes corre verifyToken).
+// El usuario llega aca después de loguearse con la contraseña temporal.
+// Body: { newPassword, confirmPassword }
 async function changePassword(req, res, next) {
     try {
-        // El id lo sacamos del token (lo puso verifyToken en req.user),
-        // no del body, para que nadie cambie la contraseña de otro.
+        // El id lo saco del token (lo puso verifyToken), no del body, para que
+        // nadie cambie la contraseña de otro.
         const userId = req.user.id;
 
-        // "|| {}" evita un error si la petición llega sin body (req.body
-        // undefined). Así, en vez de reventar con un 500, sigue el flujo y
-        // el service responde un 400 limpio diciendo que faltan los campos.
+        // El "|| {}" es por si la petición llega sin body: así no revienta con
+        // un 500 y el service responde un 400 diciendo que faltan los campos.
         const { newPassword, confirmPassword } = req.body || {};
 
         await passwordService.changePassword(userId, newPassword, confirmPassword);
@@ -42,8 +40,8 @@ async function changePassword(req, res, next) {
             });
         }
 
-        // Cualquier otra cosa (ej. la base de datos falló) la maneja el
-        // manejador de errores general de app.js.
+        // Cualquier otra cosa (ej: falló la BD) la maneja el manejador
+        // general de app.js.
         next(error);
     }
 }

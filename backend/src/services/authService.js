@@ -1,15 +1,10 @@
-// ============================================================
-// authService.js
-// Lógica de negocio de autenticación (login, HU-00) y registro de
-// usuarios (registerUser, HU-01).
-// Esta capa NO conoce req/res (responsabilidad del controller) ni
-// ejecuta queries SQL directas (responsabilidad del repository).
-// Orquesta: pedir el usuario al repository, validar la contraseña,
-// y generar el token si todo es correcto.
-// ============================================================
+// Lógica de login (HU-00) y registro de usuarios (HU-01).
+/* Esta capa no toca req/res (eso es del controller) ni hace queries SQL (eso es del repository). 
+Solo arma el flujo: pide el usuario al repo, valida la contraseña y genera el token si todo va bien.
+*/
 
 const bcrypt = require("bcrypt");
-const crypto = require("crypto"); // usa la librería crypto de node para generar una contraseña temporal aleatoria segura
+const crypto = require("crypto"); // lo uso para generar una contraseña temporal aleatoria
 const {
   findUserByEmail,
   findUserByDocument,
@@ -27,36 +22,28 @@ const {
 } = require("../repositories/authRepository");
 const { generateToken } = require("../utils/jwt");
 
-/**
- * Error de dominio para credenciales inválidas.
- * Se define como clase propia (en vez de un Error genérico) para que
- * el controller pueda distinguirlo de errores inesperados (ej. caída
- * de la base de datos) usando "instanceof", y responder 401 en vez
- * de 500.
- */
+/* Hago clases de error propias para cada caso. 
+Así el controller las puede distinguir con "instanceof" y responder el código HTTP correcto en vez de devolver siempre 500.
+*/
+
 class InvalidCredentialsError extends Error {}
 
-class RoleNotFoundError extends Error {} // Error de dominio para rol no encontrado (ej. al crear un usuario con un rol inválido).
-class EmailAlreadyExistsError extends Error {} // Error de dominio para email ya registrado (ej. al crear un usuario con un email que ya existe).
-class DocumentAlreadyExistsError extends Error {} // Error de dominio para documento ya registrado (ej. al crear un usuario con un documento que ya existe).
+class RoleNotFoundError extends Error {} // el rol no existe
+class EmailAlreadyExistsError extends Error {} // el email ya está registrado
+class DocumentAlreadyExistsError extends Error {} // el documento ya está registrado
 
-class UserNotFoundError extends Error {} // El usuario indicado (:id) no existe. -> 404
-class InvalidTlError extends Error {} // El TL indicado no existe o no tiene rol instructor. -> 400
+class UserNotFoundError extends Error {} // el usuario (:id) no existe -> 404
+class InvalidTlError extends Error {} // el TL no existe o no es instructor -> 400
 class InvalidStatusError extends Error {} // availability_status no valido -> 400
 class ForbiddenStatusError extends Error {} // no es admin ni el TL del coder -> 403
 
-// Estados validos de disponibilidad (ver enum en schema.sql).
+// Estados válidos de disponibilidad (mismos que el enum del schema.sql).
 const VALID_AVAILABILITY_STATUSES = ["available", "in_conversation", "unavailable"];
 
-/**
- * Genera una contraseña temporal aleatoria y legible (evita caracteres
- * ambiguos como 0/O o l/1) para asignarla a un usuario recién creado
- * por un admin (HU-01). El usuario deberá cambiarla en su primer login
- * (ver must_change_password en createUser / login).
- *
- * @param {number} [length=10] - Longitud de la contraseña generada.
- * @returns {string} Contraseña temporal en texto plano.
- */
+/* Genera una contraseña temporal aleatoria y fácil de leer (sin caracteres que se confunden como 0/O o l/1). 
+Se la asigno al usuario que crea el admin (HU-01) y él tiene que cambiarla en el primer login.
+*/
+
 function generateTempPassword(length = 10) {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   const bytes = crypto.randomBytes(length);
@@ -67,32 +54,13 @@ function generateTempPassword(length = 10) {
   return password;
 }
 
-/**
- * Ejecuta el flujo completo de registro de un usuario nuevo (HU-01).
- * Solo debe llamarse desde una ruta protegida por verifyToken +
- * requireRole('admin') (ver authRoutes.js: POST /users).
- *
- * CA: valida que el rol exista, que el email no esté registrado y,
- * si viene document, que tampoco esté registrado. Genera una
- * contraseña temporal, la hashea, y crea el usuario con
- * must_change_password = true.
- *
- * @param {Object} data
- * @param {string} data.name
- * @param {string} data.email
- * @param {string} data.role - Nombre del rol (ej. "admin", "coder").
- * @param {string} [data.phone]
- * @param {string} [data.document]
- * @param {string} [data.company] - Solo se guarda si role === 'recruiter';
- *   para cualquier otro rol se ignora y se guarda como null.
- * @returns {Promise<Object>} { user, tempPassword } — tempPassword se
- *   devuelve en texto plano solo esta vez, para que el admin se la
- *   comparta al nuevo usuario (nunca se guarda en texto plano ni se
- *   vuelve a exponer después).
- * @throws {RoleNotFoundError} Si el rol no existe.
- * @throws {EmailAlreadyExistsError} Si el email ya está registrado.
- * @throws {DocumentAlreadyExistsError} Si el document ya está registrado.
- */
+// Registra un usuario nuevo. 
+/* Solo lo llama el admin desde la ruta protegida POST /users. 
+Valida que el rol exista y que el email (y el documento si viene) no estén repetidos. 
+Crea al usuario con una contraseña temporal y must_change_password = true.
+Devuelve { user, tempPassword }: la tempPassword se manda en texto plano solo esta vez para que el admin se la pase al usuario; no se guarda así.
+*/
+
 async function registerUser({ name, email, role, phone, document, company }) {
   const roleRecord = await findRoleByName(role);
   if (!roleRecord) {
@@ -115,10 +83,8 @@ async function registerUser({ name, email, role, phone, document, company }) {
     }
   }
 
-  // CA: "company" solo tiene sentido para el rol "recruiter" (empresa
-  // que representa el reclutador). Para cualquier otro rol se ignora,
-  // aunque venga en el body, para no guardar un dato sin sentido de
-  // negocio (ej. un "coder" con company).
+  // "company" solo tiene sentido para el reclutador. Para cualquier otro rol lo ignoro aunque venga en el body, y lo guardo como null
+
   const finalCompany = role === "recruiter" ? company : null;
 
   const tempPassword = generateTempPassword();
@@ -150,26 +116,11 @@ async function registerUser({ name, email, role, phone, document, company }) {
   };
 }
 
-/**
- * Ejecuta el flujo completo de login: valida credenciales y arma
- * la respuesta que se enviará al cliente si son correctas.
- *
- * CA-02: si el correo y la contraseña son correctos, genera el token.
- * CA-03: si el correo no existe O la contraseña no coincide, lanza el
- *        mismo error genérico en ambos casos — así el cliente nunca
- *        puede deducir si el correo está registrado o no (esto evita
- *        que alguien use el login para "adivinar" qué correos existen).
- * CA-04: incluye mustChangePassword en el resultado para que el
- *        frontend sepa si debe redirigir a la pantalla de cambio
- *        de contraseña obligatorio (ver HU-01, CA-03).
- *
- * @param {string} email - Correo ingresado por el usuario.
- * @param {string} password - Contraseña en texto plano ingresada por el usuario
- *   (se compara contra el hash guardado, nunca se guarda en texto plano).
- * @returns {Promise<Object>} Objeto con token, datos públicos del usuario,
- *   y el flag mustChangePassword.
- * @throws {InvalidCredentialsError} Si el correo no existe o la contraseña no coincide.
- */
+/* Hace el login: valida las credenciales y arma la respuesta si están bien.
+Si el email no existe O la contraseña no coincide, tiro el MISMO error en los dos casos, así nadie puede usar el login para adivinar qué correos existen.
+También devuelvo mustChangePassword para que el front sepa si tiene que mandar al usuario a cambiar la contraseña.
+*/
+
 async function login(email, password) {
   const user = await findUserByEmail(email);
 
@@ -177,9 +128,8 @@ async function login(email, password) {
     throw new InvalidCredentialsError("Correo o contraseña incorrectos");
   }
 
-  // bcrypt.compare hashea "password" internamente con el mismo salt
-  // que se usó al crear el hash guardado, y compara el resultado.
-  // Nunca se desencripta password_hash (bcrypt no es reversible).
+  // bcrypt.compare hashea el password que llega y lo compara con el hash guardado. El hash no se puede desencriptar (bcrypt no es reversible).
+
   const passwordMatches = await bcrypt.compare(password, user.password_hash);
 
   if (!passwordMatches) {
@@ -188,8 +138,8 @@ async function login(email, password) {
 
   const token = generateToken(user);
 
-  // Se retorna solo un subconjunto "seguro" del usuario -- nunca
-  // password_hash, aunque ya no se necesite en este punto.
+  // Devuelvo solo los datos que el front necesita, nunca el password_hash.
+
   return {
     token,
     user: {
@@ -203,23 +153,11 @@ async function login(email, password) {
   };
 }
 
-/**
- * Reconstruye los datos públicos de un usuario a partir de su id
- * (viene de req.user.id, adjuntado por verifyToken al decodificar
- * el JWT). Se usa en GET /me para que el frontend pueda "recordar"
- * la sesión tras una recarga de página, sin depender de tener el
- * usuario guardado en memoria.
- *
- * Se vuelve a consultar la base de datos (en vez de confiar solo en
- * lo que ya venía en el token) porque mustChangePassword puede haber
- * cambiado desde que el token se generó -- el token no se re-emite
- * después de un cambio de contraseña, así que sería un dato viejo si
- * se leyera directo del payload.
- *
- * @param {number} userId - Id del usuario autenticado (req.user.id).
- * @returns {Promise<Object>} Datos públicos del usuario, mismo shape que login().
- * @throws {UserNotFoundError} Si el id no corresponde a ningún usuario.
+/* Devuelve los datos del usuario a partir de su id (viene de req.user.id, que lo pone verifyToken al leer el JWT). 
+Lo uso en GET /me para que el front recupere la sesión después de recargar la página.
+Vuelvo a consultar la BD en vez de confiar en el token porque mustChangePassword puede haber cambiado desde que se generó el token.
  */
+
 async function getCurrentUser(userId) {
   const user = await findUserById(userId);
 
@@ -239,23 +177,11 @@ async function getCurrentUser(userId) {
   };
 }
 
-/**
- * Arma el perfil completo del usuario autenticado (T2 de la HU de
- * disponibilidad): a diferencia de getCurrentUser (usado en GET /me
- * para reconstruir la sesión), este perfil incluye los campos propios
- * de un coder -- en especial availability_status, que alimenta el
- * badge del dashboard (CA-01: verde "Disponible" / amarillo "En
- * conversaciones" / gris "No disponible").
- *
- * Es de solo lectura: este endpoint no expone ninguna forma de que el
- * propio usuario cambie su availability_status (CA-03) -- ese cambio
- * solo lo puede hacer un TL o un admin desde otro endpoint (fuera del
- * alcance de T2), y el coder solo lo ve reflejado al recargar (CA-02).
- *
- * @param {number} userId - Id del usuario autenticado (req.user.id).
- * @returns {Promise<Object>} Perfil público del usuario, incluyendo availabilityStatus.
- * @throws {UserNotFoundError} Si el id no corresponde a ningún usuario.
- */
+/* Arma el perfil completo del usuario logueado. 
+A diferencia de getCurrentUser, este trae los campos del coder, sobre todo availability_status, que es lo que pinta el badge del dashboard (verde / amarillo / gris).
+Es solo lectura: por aca el coder no puede cambiar su estado; eso lo hace un TL o el admin desde otro endpoint.
+*/
+
 async function getMyProfile(userId) {
   const user = await findUserProfileById(userId);
 
@@ -283,12 +209,8 @@ async function getMyProfile(userId) {
   };
 }
 
-/**
- * Devuelve el listado completo de usuarios (admin). Traduce cada fila
- * de la base de datos al shape público que espera el frontend.
- *
- * @returns {Promise<Array>} Lista de usuarios.
- */
+// Devuelve la lista de todos los usuarios (vista del admin). Convierte cada fila de la BD al formato que espera el front.
+
 async function getAllUsers() {
   const users = await findAllUsers();
 
@@ -308,25 +230,17 @@ async function getAllUsers() {
   }));
 }
 
-/**
- * Asigna un TL (team leader) a un usuario. Es la HU-01:
- *   - T1 (issue #65): valida que el TL destino exista y tenga rol "instructor".
- *   - T2 (issue #66): guarda la asignacion actualizando tl_id en la tabla users.
- *
- * @param {number} userId - Id del usuario (coder) que recibe el TL.
- * @param {number} tlId - Id del instructor a asignar como TL.
- * @returns {Promise<Object>} El usuario actualizado con su nuevo tlId.
- * @throws {UserNotFoundError} Si el usuario :id no existe (404).
- * @throws {InvalidTlError} Si el TL no existe o no es instructor (400).
- */
+// Asigna un TL (instructor) a un coder - HU-02.
+// Valida que el coder exista y que el TL exista y tenga rol instructor, y después guarda el tl_id.
+
 async function assignTl(userId, tlId) {
-  // El usuario al que se le asigna el TL debe existir.
+  // El coder al que le asigno el TL tiene que existir
   const user = await findUserById(userId);
   if (!user) {
     throw new UserNotFoundError("El usuario indicado no existe");
   }
 
-  // Validacion central de T1: el TL destino debe existir y ser instructor.
+  // El TL destino tiene que existir y ser instructor.
   const tl = await findUserById(tlId);
   if (!tl) {
     throw new InvalidTlError("El TL indicado no existe");
@@ -337,7 +251,7 @@ async function assignTl(userId, tlId) {
     );
   }
 
-  // T2: guardar la asignacion (actualizar tl_id en la tabla users).
+  // Guardo la asignación (actualizo tl_id en users).
   const updated = await updateUserTl(userId, tlId);
 
   return {
@@ -349,19 +263,10 @@ async function assignTl(userId, tlId) {
   };
 }
 
-/**
- * HU-11 (T1 + T2) — Cambia el estado de disponibilidad de un usuario.
- * Permiso (RN-10): un admin, o el instructor que sea el TL asignado a ese
- * coder (tl_id === requester.id). Guarda la auditoria en el mismo UPDATE.
- *
- * @param {Object} requester - Usuario autenticado (req.user): { id, roleName }.
- * @param {number} targetUserId - Usuario cuyo estado se cambia.
- * @param {string} status - Nuevo estado.
- * @returns {Promise<Object>} El usuario con su nuevo estado y la auditoria.
- * @throws {InvalidStatusError} status no válido (400).
- * @throws {UserNotFoundError} el usuario no existe (404).
- * @throws {ForbiddenStatusError} no es admin ni el TL del coder (403).
- */
+// Cambia el estado de disponibilidad de un coder (available / in_conversation / unavailable).
+// Permiso: solo el admin o el instructor que sea su TL asignado.
+// Guardo también quién lo cambió y cuándo (auditoría) en el mismo UPDATE.
+
 async function changeAvailabilityStatus(requester, targetUserId, status) {
   if (!VALID_AVAILABILITY_STATUSES.includes(status)) {
     throw new InvalidStatusError(
@@ -374,7 +279,7 @@ async function changeAvailabilityStatus(requester, targetUserId, status) {
     throw new UserNotFoundError("El usuario indicado no existe");
   }
 
-  // RN-10: admin, o instructor que sea el TL asignado a ese coder.
+  // RN-10: admin, o el instructor que es el TL de ese coder.
   const isAdmin = requester.roleName === "admin";
   const isAssignedTl =
     requester.roleName === "instructor" && target.tl_id === requester.id;
@@ -395,37 +300,13 @@ async function changeAvailabilityStatus(requester, targetUserId, status) {
   };
 }
 
-/**
- * Actualiza los datos de un usuario existente (HU-01: edición por admin,
- * usada por el modal "Editar miembro").
- *
- * Reglas de negocio (las mismas validaciones que el registro, pero
- * tolerando el propio usuario):
- * - name, email y role son obligatorios.
- * - role debe existir (RoleNotFoundError -> 400).
- * - email único, ignorando al propio usuario que se está editando
- *   (EmailAlreadyExistsError -> 409).
- * - document único (si se envía), ignorando al propio usuario
- *   (DocumentAlreadyExistsError -> 409).
- * - company solo se guarda cuando role === 'recruiter'; para cualquier
- *   otro rol se fuerza a null.
- * - Nunca se permite modificar password, id, created_at, must_change_password
- *   ni datos de autenticación (no se reciben ni se escriben aquí).
- *
- * @param {number} userId - Id del usuario a actualizar.
- * @param {Object} data
- * @param {string} data.name
- * @param {string} data.email
- * @param {string} data.role - Nombre del rol (ej. "admin", "coder").
- * @param {string} [data.phone]
- * @param {string} [data.document]
- * @param {string} [data.company] - Solo se guarda si role === 'recruiter'.
- * @returns {Promise<Object>} El usuario actualizado (mismo shape que getMyProfile, sin campos sensibles).
- * @throws {UserNotFoundError} Si el usuario :id no existe (404).
- * @throws {RoleNotFoundError} Si el rol no existe (400).
- * @throws {EmailAlreadyExistsError} Si el email ya está en uso por otro usuario (409).
- * @throws {DocumentAlreadyExistsError} Si el document ya está en uso por otro usuario (409).
- */
+// Edita un usuario que ya existe (HU-01, modal "Editar miembro" del admin).
+// Usa casi las mismas validaciones que el registro, pero dejando pasar los datos del propio usuario que se está editando:
+// - name, email y role son obligatorios y el rol debe existir.
+// - email y document únicos, ignorando al mismo usuario.
+// - company solo se guarda si es reclutador, si no queda null.
+// No se toca el password ni datos de autenticación aca.
+
 async function updateUser(userId, { name, email, role, phone, document, company }) {
   const existingUser = await findUserByIdFull(userId);
   if (!existingUser) {
@@ -459,8 +340,7 @@ async function updateUser(userId, { name, email, role, phone, document, company 
     }
   }
 
-  // company solo tiene sentido para el rol "recruiter"; para cualquier
-  // otro rol se ignora y se guarda como null (mismo criterio que registerUser).
+  // Igual que en registerUser: company solo para reclutador, si no null.
   const finalCompany = role === "recruiter" ? company : null;
 
   const updated = await updateUserRepository(userId, {
@@ -487,22 +367,10 @@ async function updateUser(userId, { name, email, role, phone, document, company 
   };
 }
 
-/**
- * Elimina un usuario (HU-01: borrado por admin, usada por el modal de
- * confirmación "Delete Member"). Solo un admin autenticado puede hacerlo
- * (lo garantiza el middleware requireRole('admin') en la ruta).
- *
- * Reglas adicionales de negocio:
- * - No se puede eliminar a uno mismo (el admin autenticado), para no
- *   dejarse sin acceso a la consola. -> 403.
- * - No se puede eliminar un usuario que no existe. -> 404.
- *
- * @param {number} userId - Id del usuario a eliminar.
- * @param {Object} requester - Usuario autenticado (req.user): { id, roleName }.
- * @returns {Promise<void>}
- * @throws {UserNotFoundError} Si el usuario :id no existe (404).
- * @throws {ForbiddenStatusError} Si el admin intenta eliminarse a sí mismo (403).
- */
+// Elimina un usuario: Solo el admin llega aca gracias al middleware de la ruta. Reglas extra:
+// - No me puedo eliminar a mí mismo (para no quedarme sin acceso) -> 403.
+// - No puedo eliminar un usuario que no existe -> 404.
+
 async function deleteUser(userId, requester) {
   const existingUser = await findUserByIdFull(userId);
   if (!existingUser) {
