@@ -24,7 +24,8 @@ import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
 
 export const routes = [
   { path: "/", view: LandingView },
-  { path: "/login", view: LoginView, mount: mountLoginView },
+  // guestOnly: si ya hay sesión, el router redirige al dashboard del rol.
+  { path: "/login", view: LoginView, mount: mountLoginView, guestOnly: true },
   {
     path: "/change-password",
     view: ChangePasswordView,
