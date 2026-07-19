@@ -20,8 +20,7 @@ import {
   mountPublicProfileView,
 } from "../views/PublicProfileView.js";
 import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
-
-// import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
+import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
 
 export const routes = [
   { path: "/", view: LandingView },
@@ -64,7 +63,13 @@ export const routes = [
     mount: mountRecruiterView,
     roles: ["recruiter"],
   },
-  // { path: "/gallery", view: GalleryView, mount: mountGalleryView },
+  {
+    // Galería pública (HU-12): cualquier usuario autenticado la ve.
+    path: "/gallery",
+    view: GalleryView,
+    mount: mountGalleryView,
+    roles: null,
+  },
 
   { path: "*", view: NotFoundView, roles: null },
 ];
