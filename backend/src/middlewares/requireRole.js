@@ -1,41 +1,26 @@
 
-// ============================================================
-// Este archivo contiene el middleware de AUTORIZACIÓN (T2 de HU-01: "Middleware de autorización solo Admin").
-//
-// Se construye como fábrica genérica requireRole(...roles) en vez
-// de un middleware fijo "solo Admin", porque HU-01 no será la única
-// ruta que necesite restringir por rol -- otras HUs del backlog
-// (ej. calificar proyectos = solo Instructor) van a necesitar el
-// mismo patrón. Reutilizar esta fábrica evita reescribir el mismo
-// middleware varias veces.
-//
-// IMPORTANTE: este middleware SIEMPRE debe ir después de
-// verifyToken.js en la cadena de la ruta, porque depende de que
-// req.user ya exista (verifyToken es quien lo llena).
-// ============================================================
+
+// Middleware de autorización por rol (HU-01 T2: "solo Admin").
+// Lo hago como una fábrica requireRole(...roles) en vez de uno fijo de admin,
+// porque otras rutas (ej: calificar = solo instructor) van a necesitar lo mismo y así no lo reescribo cada vez.
+
+// OJO: siempre va DESPUÉS de verifyToken en la ruta, porque necesita que req.user ya exista (lo llena verifyToken).
 
 /*
- * Fábrica de middlewares de autorización por rol.
+ * Recibe los roles permitidos (ej: 'admin') y devuelve el middleware.
+ * Los comparo en minúscula para que no falle por mayúsculas.
  *
- * @param {...string} allowedRoles - Nombres de rol permitidos (ej. 'admin').
- *   Se comparan en minúscula para que no falle por diferencias de mayúsculas.
- * @returns {Function} Middleware de Express.
- *
- * @example
- * // Solo Admin (caso de HU-01-T2):
- * router.post('/users', verifyToken, requireRole('admin'), createUser);
- *
- * @example
- * // Admin o Instructor (ejemplo de reutilización futura):
- * router.post('/gradings', verifyToken, requireRole('admin', 'instructor'), createGrading);
+ * Ejemplos:
+ *   router.post('/users', verifyToken, requireRole('admin'), createUser);
+ *   router.post('/gradings', verifyToken, requireRole('admin', 'instructor'), createGrading);
  */
 
 function requireRole(...allowedRoles) {
     const normalizedAllowedRoles = allowedRoles.map((role) => role.toLowerCase());
 
     return function (req, res, next) {
-    // Si esto falla, significa que requireRole se usó sin verifyToken antes
-    // en la ruta -- error de programación, no del usuario final.
+    // Si esto falla es porque usé requireRole sin verifyToken antes
+    // sea, un error mío programando, no del usuario
     if (!req.user || !req.user.roleName) {
         return res.status(401).json({
         success: false,

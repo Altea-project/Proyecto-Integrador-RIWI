@@ -1,35 +1,15 @@
-// ============================================================
-// getProjectsController.js
-// HU-12 · T1 — GET /projects (galería de proyectos).
-//
-// Archivo INDEPENDIENTE de projectController.js a propósito (ver nota
-// en getProjectsRepository.js): esta feature no comparte código con
-// createProject, solo comparte la tabla "projects".
-//
-// Responsabilidad única: leer la petición HTTP (req), delegar la
-// lógica real al service, y traducir el resultado a una respuesta
-// HTTP (res). No contiene lógica de negocio ni queries SQL.
-// ============================================================
+
+// GET /projects (galería de proyectos) - HU-12.
+// Es un archivo aparte de projectController.js a propósito: esta feature no
+// comparte código con crear proyecto, solo la tabla "projects".
+// Solo lee req, llama al service y arma la respuesta.
 
 const getProjectsService = require("../services/getProjectsService");
 
-/**
- * GET /projects
- *
- * Ruta protegida solo por autenticación (verifyToken): cualquier
- * usuario autenticado, sin importar su rol, puede ver la galería
- * (ver la HU-12: "Como usuario autenticado, quiero ver una galería
- * de proyectos..."). A diferencia de createProject, no lleva
- * requireRole en getProjectsRoutes.js.
- *
- * No recibe query params ni body: siempre devuelve la lista completa,
- * ya ordenada por el service/repository según RN-04.
- *
- * Respuestas posibles:
- * - 200: -> { success: true, data: { projects: [...] } }
- * - 401: token no enviado / inválido / expirado (lo maneja verifyToken)
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// GET /projects
+// Ruta protegida solo con login: cualquier usuario logueado (sea el rol que sea) puede ver la galería (HU-12). 
+// No lleva requireRole.
+// No recibe params ni body: siempre devuelve la lista completa, ya ordenada por el service según RN-04.
 async function getProjects(req, res, next) {
   try {
     const projects = await getProjectsService.getGalleryProjects();
@@ -43,10 +23,8 @@ async function getProjects(req, res, next) {
   }
 }
 
-/**
- * GET /projects/pending — TL Dashboard: proyectos sin calificar de los
- * coders del instructor autenticado. El tlId sale del token (req.user.id).
- */
+// GET /projects/pending - dashboard del TL: proyectos sin calificar de sus
+// coders. El tlId sale del token (req.user.id).
 async function getPendingProjects(req, res, next) {
   try {
     const projects = await getProjectsService.getPendingProjects(req.user.id);

@@ -38,15 +38,10 @@ export function Header({ extraClasses = "" } = {}) {
             </div>
             <input 
               type="text" 
-              placeholder="Explorar conocimiento..." 
+              placeholder="Búsqueda global — Próximamente" 
               class="h-9 w-full rounded-xl border border-border-default bg-[#161B26]/30 pl-10 pr-12 text-[11px] text-text-primary outline-none transition-all focus:border-[#8044F0]/50 focus:ring-4 focus:ring-[#8044F0]/5 placeholder:text-text-tertiary placeholder:uppercase placeholder:tracking-tighter"
               disabled
             />
-            <div class="absolute inset-y-0 right-2 flex items-center">
-              <kbd class="hidden sm:inline-flex h-5 items-center rounded-md border border-border-default px-1.5 font-mono text-[9px] font-black text-text-tertiary bg-[#0B0E14]">
-                CMD K
-              </kbd>
-            </div>
           </div>
         </div>
 
@@ -85,14 +80,15 @@ export function Header({ extraClasses = "" } = {}) {
                   </div>
                   
                   <div class="p-2 space-y-1">
+                    ${user.roleName === "coder" ? `
                     <a href="/profile/${user.id}" data-nav class="group flex w-full items-center gap-3 px-4 py-3 text-xs font-bold text-text-secondary hover:bg-white/[0.03] hover:text-text-primary rounded-xl transition-all">
                     <div class="p-1.5 rounded-lg bg-[#0B0E14] border border-border-default group-hover:border-[#8044F0]/30">
                       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
                     Mi Identidad Pública
                   </a>
-                    
-                    <div class="mx-4 my-2 h-px bg-border-default/40"></div>
+
+                    <div class="mx-4 my-2 h-px bg-border-default/40"></div>` : ""}
 
                     <button
                       type="button"

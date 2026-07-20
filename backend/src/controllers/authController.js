@@ -1,32 +1,20 @@
-// ============================================================
-// authController.js
-// Controller de autenticación.
-// Responsabilidad única: leer la petición HTTP (req), validar lo
-// mínimo de forma (campos presentes), delegar la lógica real al
-// service, y traducir el resultado a una respuesta HTTP (res).
-// No contiene lógica de negocio ni queries SQL.
-// ============================================================
+
+// Controller de autenticación. 
+// Solo lee la petición (req), valida que estén los campos, le pasa el trabajo real al service y arma la respuesta (res). 
+// No tiene lógica de negocio ni queries.
 
 const authService = require("../services/authService");
 
-/**
- * POST /login
- *
- * Body esperado: { email: string, password: string }
- *
- * Respuestas posibles:
- * - 200: login exitoso -> { success: true, data: { token, user, mustChangePassword } }
- * - 400: falta email o password (CA-01)                -> { success: false, error }
- * - 401: credenciales incorrectas (CA-03)                -> { success: false, error }
- * - 500: error inesperado (BD caída, etc.) -> delega al manejador de errores centralizado
- */
+// POST /login
+// Body: { email, password }
+// Devuelve 200 con el token si sale bien, 400 si faltan datos, 401 si las
+// credenciales están mal, y 500 (vía next) si pasa algo inesperado.
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    // CA-01: validación de forma (no de negocio). Se hace aquí, antes
-    // de llamar al service, para no gastar una consulta a la BD con
-    // datos que ya sabemos que son inválidos.
+    // Valido que vengan los campos antes de tocar la BD (así no gasto
+    // una consulta si ya sé que faltan datos).
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -34,9 +22,7 @@ async function login(req, res, next) {
       });
     }
 
-    // Toda la lógica real (buscar usuario, comparar contraseña,
-    // generar token) vive en el service. El controller no sabe cómo
-    // se hace, solo qué esperar como resultado.
+    // Todo lo demás (buscar usuario, comparar contraseña, generar token) lo hace el service.
     const result = await authService.login(email, password);
 
     return res.status(200).json({
@@ -44,8 +30,7 @@ async function login(req, res, next) {
       data: result,
     });
   } catch (error) {
-    // CA-03: si el error es de credenciales inválidas (lanzado por el
-    // service), lo traducimos a un 401 con mensaje genérico.
+    // Si el service tiró error de credenciales, respondo 401 con mensaje genérico.
     if (error instanceof authService.InvalidCredentialsError) {
       return res.status(401).json({
         success: false,
@@ -53,28 +38,15 @@ async function login(req, res, next) {
       });
     }
 
-    // Cualquier otro error (ej. falla de conexión a la BD) no lo
-    // manejamos aquí -- se delega al manejador de errores centralizado
-    // de Express (middleware con 4 parámetros al final de app.js).
+    // Cualquier otro error (ej: se cayó la BD) lo mando al manejador central de app.js.
     next(error);
   }
 }
 
-/**
- * GET /me
- *
- * Ruta protegida (verifyToken): devuelve los datos actuales del
- * usuario dueño del token enviado en el header Authorization.
- * Se usa al arrancar el frontend para reconstruir la sesión tras
- * una recarga de página (el token persiste en localStorage, pero
- * el usuario en memoria se pierde).
- *
- * Respuestas posibles:
- * - 200: -> { success: true, data: { user, mustChangePassword } }
- * - 401: token no enviado / inválido / expirado (lo maneja verifyToken, antes de llegar acá)
- * - 404: el id del token ya no corresponde a ningún usuario (ej. fue borrado)
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// GET /me
+// Ruta protegida. Devuelve los datos del usuario dueño del token.
+// El front la usa al arrancar para recuperar la sesión después de recargar
+// (el token queda en localStorage pero el usuario en memoria se pierde).
 async function getCurrentUser(req, res, next) {
   try {
     const result = await authService.getCurrentUser(req.user.id);

@@ -1,6 +1,6 @@
-// controllers/interestController.js
-// Controller delgado: no toca SQL ni transacciones. Solo lee req/res
-// y traduce los errores de dominio del service a códigos HTTP.
+
+// Controller del flujo de interes: no toca SQL ni transacciones. 
+// Solo lee req/res y traduce los errores de dominio del service a códigos HTTP.
 
 const interestService = require('../services/interestService');
 

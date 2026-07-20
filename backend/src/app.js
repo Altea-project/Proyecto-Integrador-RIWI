@@ -1,10 +1,7 @@
-// ============================================================
+
 // app.js
-// este archivo configura la aplicación Express: middlewares globales y rutas.
-// NO arranca el servidor (eso lo hace server.js con app.listen).
-// Separar esto permite, por ejemplo, testear la app sin levantar
-// un puerto real.
-// ============================================================
+// Aca configuro Express: los middlewares y las rutas.
+// El servidor se arranca en server.js, no aca.
 
 const express = require('express');
 const cors = require('cors');
@@ -22,40 +19,48 @@ const skillRoutes = require('./routes/skillRoutes'); // HU-03 - T3: GET /skills 
 const app = express();
 
 // Middlewares globales
-app.use(cors()); // Permite que el frontend (otro origen/puerto) consuma la API.
+// CORS: en local dejo pasar cualquier puerto de localhost (Vite usa el 5173).
+// En producción solo dejo pasar el dominio del front (FRONTEND_URL).
+const isLocalhost = (origin) =>
+    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin) return callback(null, true); // Postman/curl -> permitido
+        if (isLocalhost(origin)) return callback(null, true);
+        if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origen no permitido por CORS'));
+    },
+}));
 app.use(express.json()); // Parsea el body de las peticiones como JSON -> req.body
 
 // Rutas
-// Todo lo que venga de authRoutes queda bajo el prefijo /api
-// (ej: POST /login en authRoutes.js -> queda POST /api/login)
+// Todo lo de authRoutes queda con el prefijo /api (ej: /login -> /api/login)
 app.use('/api', authRoutes);
 app.use('/api', passwordRoutes); // PATCH /api/change-password
 app.use('/api', projectRoutes); // POST /api/projects
 app.use('/api', getProjectsRoutes); // GET /api/projects (galería) + GET /api/projects/pending
-// GET /api/projects/:id (detalle). Se monta DESPUÉS de getProjectsRoutes
-// a propósito: esa contiene GET /projects/pending, y "/projects/:id"
-// coincide con cualquier segmento -incluido "pending"-, así que si este
-// router se montara antes, "pending" terminaría entrando aquí como si
-// fuera un id (ver nota en getProjectByIdRoutes.js).
+// Ojo con el orden: este va DESPUÉS de getProjectsRoutes. Como "/projects/:id"
+// matchea cualquier segmento (incluido "pending"), si lo pusiera antes,
+// "pending" entraría aca como si fuera un id.
 app.use('/api', getProjectByIdRoutes);
 app.use('/api/interests', interestRoutes); // POST /api/interests
 app.use('/api', gradingRoutes); // POST /api/gradings, PATCH /api/gradings/:id
 app.use('/api/coders', coderRoutes); // GET /api/coders/search
 app.use('/api', skillRoutes); // GET /api/skills (HU-03 - T3)
 
-// Ruta de salud simple, útil para confirmar que el servidor responde
-// antes de probar rutas más complejas.
+// Ruta simple para chequear que el server responde
 app.get('/', (req, res) => {
     res.json({ success: true, message: 'API de Altea funcionando' });
 });
 
-// Manejador de errores centralizado (versión mínima por ahora).
-// Cualquier next(error) de un controller termina aquí.
-// IMPORTANTE: va SIEMPRE al final, después de todas las rutas.
+// Manejo de errores centralizado. Cualquier next(error) de un controller cae aca.
+// Tiene que ir al final, después de todas las rutas.
 app.use((error, req, res, next) => {
   // express.json() lanza un SyntaxError cuando el body no es JSON válido
-  // (ej: falta un valor, coma de más, comillas sin cerrar). Es un error
-  // del cliente (400), no una falla del servidor (500).
+  // (ej: falta un valor, coma de más, comillas sin cerrar). Es un error del cliente (400), no una falla del servidor (500).
     if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
     return res.status(400).json({
         success: false,

@@ -7,7 +7,6 @@ build/
 
 # ─── Variables de entorno ──────────────────────────────────
 .env
-.env.*
 
 # ─── Archivos de registro ──────────────────────────────────
 *.log

@@ -1,18 +1,12 @@
-// ============================================================
-// gradingController.js
-// Controller de calificaciones (HU-06). Lee req/res, valida forma
-// mínima, delega al service y traduce errores de dominio a HTTP.
-// No contiene lógica de negocio ni SQL.
-// ============================================================
+
+// Controller de calificaciones (HU-06). Lee req/res, valida la forma mínima,
+// llama al service y pasa los errores a códigos HTTP. No tiene lógica ni SQL.
 
 const gradingService = require("../services/gradingService");
 
-/**
- * POST /gradings — T2 (#80)
- * Body: { projectId, score, comment?, starred? }
- * El instructorId sale del token (req.user.id), nunca del body.
- * Respuestas: 201 | 400 | 403 | 404 | 401 (verifyToken) | 500
- */
+// POST /gradings
+// Body: { projectId, score, comment?, starred? }
+// El instructorId sale del token, nunca del body (para que nadie califique haciéndose pasar por otro instructor).
 async function createGrading(req, res, next) {
   try {
     const instructorId = req.user.id;
@@ -31,11 +25,8 @@ async function createGrading(req, res, next) {
   }
 }
 
-/**
- * PATCH /gradings/:id — T3 (#81)
- * Body: { score?, comment?, starred? } (actualización parcial)
- * Respuestas: 200 | 400 | 403 | 404 | 401 | 500
- */
+// PATCH /gradings/:id
+// Body: { score?, comment?, starred? } (se puede actualizar solo una parte).
 async function updateGrading(req, res, next) {
   try {
     const instructorId = req.user.id;
@@ -61,7 +52,7 @@ async function updateGrading(req, res, next) {
   }
 }
 
-// Traduce los errores de dominio del service a códigos HTTP.
+// Pasa los errores del service a códigos HTTP.
 function handleGradingError(error, res, next) {
   if (error instanceof gradingService.ValidationError) {
     return res.status(400).json({ success: false, error: error.message });

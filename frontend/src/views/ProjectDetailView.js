@@ -35,23 +35,30 @@ function tiempoRelativo(iso) {
 // Render de la columna izquierda a partir del proyecto real
 function renderInfo(p) {
   const stack = (p.skills || []).length
-    ? p.skills.map((t) => `<span class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-text-secondary bg-white/[0.03] border border-border-default">${t}</span>`).join("")
+    ? p.skills
+        .map(
+          (t) =>
+            `<span class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-text-secondary bg-white/[0.03] border border-border-default">${t}</span>`,
+        )
+        .join("")
     : `<span class="text-xs text-text-tertiary italic">Sin tecnologías registradas</span>`;
 
   const desc = (p.description || "Este proyecto no tiene descripción.")
-    .split("\n\n").map((par) => `<p>${par}</p>`).join("");
+    .split("\n\n")
+    .map((par) => `<p>${par}</p>`)
+    .join("");
 
-  const repoBtn = p.repoUrl
-    ? `<a href="${p.repoUrl}" target="_blank" rel="noopener" class="px-5 py-2.5 bg-[#161B26] border border-border-default hover:border-[#8044F0]/40 text-text-primary text-[11px] font-black rounded-lg tracking-widest uppercase transition-all">Abrir Repositorio</a>`
+  const repoBtn = p.repo_url
+    ? `<a href="${p.repo_url}" target="_blank" rel="noopener" class="px-5 py-2.5 bg-[#161B26] border border-border-default hover:border-[#8044F0]/40 text-text-primary text-[11px] font-black rounded-lg tracking-widest uppercase transition-all">Abrir Repositorio</a>`
     : "";
 
   return `
     <div class="p-6 bg-bg-secondary/30 border border-border-default rounded-[10px]">
       <div class="flex items-center gap-3 mb-4 flex-wrap">
         <h2 class="text-xl font-black text-white">${p.title}</h2>
-        ${typeBadge(p.isExternal)}
+        ${typeBadge(p.is_external)}
       </div>
-      <p class="text-sm text-text-secondary mb-5">${p.coderName || "—"} · Entregado ${tiempoRelativo(p.createdAt)}</p>
+      <p class="text-sm text-text-secondary mb-5">Entregado ${tiempoRelativo(p.created_at)}</p>
       <div class="flex flex-wrap gap-3">${repoBtn}</div>
     </div>
 
@@ -81,7 +88,7 @@ export function ProjectDetailView(params = {}) {
       <div class="flex items-start justify-between gap-4 mb-8 flex-wrap">
         <div>
           <h1 class="text-3xl font-black text-white tracking-tighter font-heading">Evaluación Técnica de Proyecto</h1>
-          <p class="text-text-secondary text-sm mt-1">HU-06 · Entorno de evaluación — acceso del Líder de Equipo</p>
+          <p class="text-text-secondary text-sm mt-1">Entorno de evaluación — acceso del Líder de Equipo</p>
         </div>
         <span id="pd-grade-badge" class="px-4 py-2 rounded-full text-[11px] font-black text-amber-300 border border-amber-400/30 bg-amber-400/10 uppercase tracking-widest">Sin Calificar</span>
       </div>
@@ -106,7 +113,7 @@ export function ProjectDetailView(params = {}) {
               <span class="text-amber-300">★</span>
               <h3 class="text-sm font-black text-white uppercase tracking-widest">Calificación del Proyecto</h3>
             </div>
-            <p class="text-[10px] text-text-tertiary mb-6">HU-06 · Solo el Líder de Equipo asignado</p>
+            <p class="text-[10px] text-text-tertiary mb-6">Solo el Líder de Equipo asignado</p>
 
             <form id="grading-form" class="space-y-6" novalidate>
               <!-- SCORE -->
@@ -172,8 +179,12 @@ export async function mountProjectDetailView(params = {}) {
   };
 
   scoreInput?.addEventListener("input", pintarBarra);
-  comment?.addEventListener("input", () => { if (count) count.textContent = `${comment.value.length}/500`; });
-  document.getElementById("grading-cancel-btn")?.addEventListener("click", () => navigate("/tl"));
+  comment?.addEventListener("input", () => {
+    if (count) count.textContent = `${comment.value.length}/500`;
+  });
+  document
+    .getElementById("grading-cancel-btn")
+    ?.addEventListener("click", () => navigate("/tl"));
 
   // --- cargar el detalle del proyecto ---
   try {
@@ -187,15 +198,19 @@ export async function mountProjectDetailView(params = {}) {
 
     // Si ya tiene calificación: badge con el puntaje + precargar el formulario
     const badge = document.getElementById("pd-grade-badge");
-    if (p.grading) {
+    if (p.graded) {
       if (badge) {
-        badge.textContent = `Calificado · ${p.grading.score}/100`;
-        badge.className = "px-4 py-2 rounded-full text-[11px] font-black text-emerald-300 border border-emerald-400/30 bg-emerald-400/10 uppercase tracking-widest";
+        badge.textContent = `Calificado · ${p.score}/100`;
+        badge.className =
+          "px-4 py-2 rounded-full text-[11px] font-black text-emerald-300 border border-emerald-400/30 bg-emerald-400/10 uppercase tracking-widest";
       }
-      if (scoreInput) scoreInput.value = p.grading.score;
-      if (comment) { comment.value = p.grading.comment || ""; if (count) count.textContent = `${comment.value.length}/500`; }
+      if (scoreInput) scoreInput.value = p.score;
+      if (comment) {
+        comment.value = p.comment || "";
+        if (count) count.textContent = `${comment.value.length}/500`;
+      }
       const star = document.getElementById("grading-starred");
-      if (star) star.checked = !!p.grading.starred;
+      if (star) star.checked = !!p.starred;
       const btn = document.getElementById("grading-submit-btn");
       if (btn) btn.textContent = "Actualizar Calificación";
       pintarBarra();
@@ -218,30 +233,35 @@ export async function mountProjectDetailView(params = {}) {
   }
 
   // --- enviar calificación -> POST /gradings (HU-06) ---
-  document.getElementById("grading-form")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const score = Number(scoreInput?.value);
-    if (!Number.isInteger(score) || score < 0 || score > 100) {
-      showToast("El puntaje debe ser un entero entre 0 y 100.", "error");
-      return;
-    }
-    const btn = document.getElementById("grading-submit-btn");
-    const original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "PUBLICANDO…";
-    try {
-      await apiClient.post("/gradings", {
-        projectId,
-        score,
-        comment: comment?.value.trim() || undefined,
-        starred: document.getElementById("grading-starred")?.checked || false,
-      });
-      showToast("Calificación publicada con éxito.", "success");
-      setTimeout(() => navigate("/tl"), 800);
-    } catch (err) {
-      showToast(err.body?.error || "No se pudo publicar la calificación.", "error");
-      btn.disabled = false;
-      btn.textContent = original;
-    }
-  });
+  document
+    .getElementById("grading-form")
+    ?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const score = Number(scoreInput?.value);
+      if (!Number.isInteger(score) || score < 0 || score > 100) {
+        showToast("El puntaje debe ser un entero entre 0 y 100.", "error");
+        return;
+      }
+      const btn = document.getElementById("grading-submit-btn");
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "PUBLICANDO…";
+      try {
+        await apiClient.post("/gradings", {
+          projectId,
+          score,
+          comment: comment?.value.trim() || undefined,
+          starred: document.getElementById("grading-starred")?.checked || false,
+        });
+        showToast("Calificación publicada con éxito.", "success");
+        setTimeout(() => navigate("/tl"), 800);
+      } catch (err) {
+        showToast(
+          err.body?.error || "No se pudo publicar la calificación.",
+          "error",
+        );
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
 }

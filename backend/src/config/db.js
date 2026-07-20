@@ -6,8 +6,7 @@ require('dotenv').config();
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }, // requerido por Supabase
-    // Si en 10s no logra conectarse, falla con un error claro en vez de
-    // quedarse colgado para siempre. Así se ve la causa real en la terminal.
+    // Si en 10s no conecta, corta con error en vez de quedarse colgado.
     connectionTimeoutMillis: 10000,
 });
 

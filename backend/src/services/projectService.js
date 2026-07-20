@@ -1,11 +1,6 @@
-// ============================================================
-// projectService.js
-// Lógica de negocio de proyectos (HU: coder sube su proyecto).
-// Esta capa NO conoce req/res (responsabilidad del controller) ni
-// ejecuta queries SQL directas (responsabilidad del repository).
-// Orquesta: validar los datos de negocio, validar los skills (si
-// vienen), crear el proyecto y vincular sus skills.
-// ============================================================
+/*  projectService.js
+Lógica de negocio de proyectos (el coder sube su proyecto). 
+No conoce req/res ni ejecuta SQL. Se encarga de validar los datos, validar las skills (si vienen), crear el proyecto y vincular sus skills.*/
 
 const {
   createProjectWithSkills,
@@ -13,43 +8,16 @@ const {
   findProjectsByCoderId,
 } = require("../repositories/projectRepository");
 
-/**
- * Error de dominio para skills inexistentes.
- * Se define como clase propia (en vez de un Error genérico) para que
- * el controller pueda distinguirlo de errores inesperados (ej. caída
- * de la base de datos) usando "instanceof", y responder 400 en vez
- * de 500.
- */
+/* Error de dominio para skills que no existen. Es una clase propia para que el controller lo distinga con "instanceof" y responda 400 en vez de 500.*/
 class InvalidSkillsError extends Error {}
 
-/**
- * Crea un proyecto nuevo asociado al coder autenticado.
- *
- * CA: el proyecto siempre queda vinculado al coder dueño del token
- * (coderId), nunca a un coder_id enviado por el cliente en el body
- * -- así se evita que un coder registre proyectos a nombre de otro.
- *
- * Si vienen skillIds, se valida que todos existan en la tabla
- * "skills" antes de vincularlos (project_skills); si alguno no
- * existe, no se crea nada (falla la operación completa).
- *
- * @param {number} coderId - Id del coder autenticado (viene de req.user.id, del JWT).
- * @param {Object} data
- * @param {string} data.title
- * @param {string} data.description
- * @param {string} data.repoUrl
- * @param {string} [data.imageUrl]
- * @param {boolean} [data.isExternal=false]
- * @param {number[]} [data.skillIds] - Ids de skills a vincular con el proyecto.
- * @returns {Promise<Object>} El proyecto creado, con sus skillIds vinculados.
- * @throws {InvalidSkillsError} Si algún skillId enviado no existe.
- */
+/* Crea un proyecto nuevo del coder logueado. 
+El proyecto siempre queda vinculado al coder del token (coderId), nunca a un coder_id que venga en el body, así un coder no registra proyectos a nombre de otro.
+Si vienen skillIds, valido que todos existan antes de vincularlos; si alguno no existe, no se crea nada.*/
 async function createProjectForCoder(coderId, data) {
   const { title, description, repoUrl, imageUrl, isExternal, skillIds } = data;
 
-  // Si se enviaron skills, se validan ANTES de crear el proyecto:
-  // así evitamos crear un proyecto "huérfano" si la lista de skills
-  // trae un id inválido.
+  /* Si mandaron skills, las valido ANTES de crear el proyecto, así no queda un proyecto huérfano si la lista trae un id inválido.*/
   let validSkillIds = [];
   if (skillIds && skillIds.length > 0) {
     const uniqueSkillIds = [...new Set(skillIds.map(Number))];

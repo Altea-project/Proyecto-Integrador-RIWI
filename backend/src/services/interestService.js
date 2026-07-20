@@ -1,30 +1,27 @@
-// services/interestService.js
-// Capa de lógica de negocio: controla la transacción completa y orquesta
-// interestRepository + mailService. El controller no sabe nada de SQL ni
-// de BEGIN/COMMIT/ROLLBACK — eso vive únicamente aquí.
+/* Lógica de negocio del flujo de interés. 
+Acá se controla toda la transacción y se coordinan interestRepository + mailService. 
+El controller no sabe nada de SQL ni de BEGIN/COMMIT/ROLLBACK, eso vive solo acá.
+*/
 
 const pool = require('../config/db');
 const interestRepository = require('../repositories/interestRepository');
 const { getTLByCoderId, sendInterestEmail } = require('./mailService');
 
-// Errores de dominio propios, para que el controller decida el código
-// HTTP sin tener que leer mensajes de texto ni acoplarse a SQL.
+
+// Errores de dominio propios, para que el controller elija el código HTTP sin tener que leer mensajes de texto.
 class CoderNotFoundError extends Error {}
 class CoderUnavailableError extends Error {}
 class NoTLAssignedError extends Error {}
 
-// ------------------------------------------------------------
-// HU-07 · T2  +  HU-10 · T1 — lógica de "mostrar interés"
-//
+// lógica de "mostrar interés".
 // Orden dentro de la transacción:
-//   1. Bloquear y leer el estado actual del coder (RN-06).
-//   2. Resolver el TL del coder (HU-07 T4).
-//   3. Enviar el correo (HU-07 T1). Si falla, se relanza y el
-//      catch hace ROLLBACK total (RN-08).
+//   1. Bloquear y leer el estado actual del coder.
+//   2. Buscar el TL del coder.
+//   3. Enviar el correo. Si falla, se relanza y el catch hace el ROLLBACK.
 //   4. Insertar el interés (status 'open').
-//   5. Mover a 'in_conversation' SOLO si estaba 'available'.
+//   5. Pasar a 'in_conversation' SOLO si estaba 'available'.
 //   6. COMMIT.
-// ------------------------------------------------------------
+
 async function createInterest(recruiterId, coderId) {
     const client = await pool.connect();
     try {
@@ -45,8 +42,7 @@ async function createInterest(recruiterId, coderId) {
 
     const recruiter = await interestRepository.findRecruiterById(recruiterId, client);
 
-    // Si sendInterestEmail lanza excepción, cae directo al catch de abajo
-    // y se hace ROLLBACK completo — no queda nada guardado (RN-08).
+    // Si sendInterestEmail lanza excepción, cae al catch de abajo y se hace ROLLBACK completo: no queda nada guardado
     await sendInterestEmail({
         tlEmail: tl.email,
         tlName: tl.name,

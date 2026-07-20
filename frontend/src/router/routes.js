@@ -11,28 +11,26 @@ import {
   mountCoderDashboard,
 } from "../views/CoderDashboard.js";
 import {
-  mountPublicProfileView,
-  PublicProfileView,
-} from "../views/PublicProfileView.js";
+  ProjectDetailRouterView,
+  mountProjectDetailRouterView,
+} from "../views/ProjectDetailRouterView.js";
 import { TLDashboard, mountTLDashboard } from "../views/TLDashboard.js";
-// import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
 import {
-  ProjectDetailView,
-  mountProjectDetailView,
-} from "../views/ProjectDetailView.js";
-// import { PublicProfileView, mountPublicProfileView } from "../views/PublicProfileView.js";
-// import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
+  PublicProfileView,
+  mountPublicProfileView,
+} from "../views/PublicProfileView.js";
+import { RecruiterView, mountRecruiterView } from "../views/RecruiterView.js";
+import { GalleryView, mountGalleryView } from "../views/GalleryView.js";
 
-// Tabla de rutas de la aplicación: ruta, vista y función de montaje
 export const routes = [
   { path: "/", view: LandingView },
-  { path: "/login", view: LoginView, mount: mountLoginView },
+  // guestOnly: si ya hay sesión, el router redirige al dashboard del rol.
+  { path: "/login", view: LoginView, mount: mountLoginView, guestOnly: true },
   {
     path: "/change-password",
     view: ChangePasswordView,
     mount: mountChangePasswordView,
   },
-  { path: "*", view: NotFoundView, mount: "", roles: null },
   { path: "/admin", view: AdminView, mount: mountAdminView, roles: ["admin"] },
   {
     path: "/dashboard",
@@ -41,13 +39,6 @@ export const routes = [
     roles: ["coder"],
   },
   {
-    path: "/profile/:id",
-    view: PublicProfileView,
-    mount: mountPublicProfileView,
-    roles: null,
-  },
-
-  {
     path: "/tl",
     view: TLDashboard,
     mount: mountTLDashboard,
@@ -55,16 +46,31 @@ export const routes = [
   },
   {
     path: "/project/:id",
-    view: ProjectDetailView,
-    mount: mountProjectDetailView,
-    roles: ["instructor"],
+    view: ProjectDetailRouterView,
+    mount: mountProjectDetailRouterView,
+    roles: ["instructor", "coder"],
   },
-  // {
-  //   path: "/recruiter",
-  //   view: RecruiterView,
-  //   mount: mountRecruiterView,
-  //   roles: ["recruiter"],
-  // },
+  {
+    // El reclutador DEBE poder ver el perfil de un coder para mostrar
+    // interés (HU-10/HU-13); por eso se incluye "recruiter" aquí.
+    path: "/profile/:id",
+    view: PublicProfileView,
+    mount: mountPublicProfileView,
+    roles: ["instructor", "coder", "recruiter"],
+  },
+  {
+    path: "/recruiter",
+    view: RecruiterView,
+    mount: mountRecruiterView,
+    roles: ["recruiter"],
+  },
+  {
+    // Galería pública (HU-12): cualquier usuario autenticado la ve.
+    path: "/gallery",
+    view: GalleryView,
+    mount: mountGalleryView,
+    roles: null,
+  },
 
-  // { path: "/gallery", view: GalleryView, mount: mountGalleryView },
+  { path: "*", view: NotFoundView, roles: null },
 ];

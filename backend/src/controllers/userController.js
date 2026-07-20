@@ -1,36 +1,19 @@
-// ============================================================
-// userController.js
-// Controller de gestión de usuarios (HU-01: registro por admin).
-// Responsabilidad única: leer la petición HTTP (req), validar lo
-// mínimo de forma (campos presentes), delegar la lógica real al
-// service, y traducir el resultado a una respuesta HTTP (res).
-// No contiene lógica de negocio ni queries SQL.
-// ============================================================
+
+// Controller de usuarios (HU-01: registro por el admin, y demás acciones).
+// Solo lee la petición, valida que estén los campos, delega en el service y arma la respuesta. No tiene lógica de negocio ni queries.
 
 const authService = require("../services/authService");
 
-/**
- * POST /users
- *
- * Ruta protegida: solo un admin autenticado puede registrar usuarios
- * nuevos (ver authRoutes.js: verifyToken + requireRole('admin')).
- *
- * Body esperado: { name, email, role, phone?, document?, company? }
- * (company solo se guarda si role === 'recruiter'; ver authService.registerUser)
- *
- * Respuestas posibles:
- * - 201: usuario creado -> { success: true, data: { user, tempPassword } }
- * - 400: faltan campos obligatorios, o el rol no existe -> { success: false, error }
- * - 409: el email o el document ya están registrados -> { success: false, error }
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// POST /users
+// Solo el admin puede crear usuarios (lo garantiza la ruta con verifyToken +
+// requireRole('admin')). Body: { name, email, role, phone?, document?, company? }.
+// 201 si se crea, 400 si faltan campos o el rol no existe, 409 si el email o documento ya existen.
 async function registerUser(req, res, next) {
   try {
     const { name, email, role, phone, document, company } = req.body;
 
-    // Validación de forma: campos mínimos obligatorios para crear un
-    // usuario. El resto de reglas (rol válido, email/document únicos)
-    // son de negocio y viven en el service.
+    // Solo valido que vengan los campos mínimos. 
+    // El resto (rol válido, email/documento únicos) lo valida el service.
     if (!name || !email || !role) {
       return res.status(400).json({
         success: false,
@@ -67,16 +50,8 @@ async function registerUser(req, res, next) {
   }
 }
 
-/**
- * GET /users
- *
- * Ruta protegida: solo un admin autenticado puede ver el listado
- * completo de usuarios (ver authRoutes.js).
- *
- * Respuestas:
- * - 200: -> { success: true, data: { users: [...] } }
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// GET /users
+// Solo el admin. Devuelve la lista completa de usuarios.
 async function getAllUsers(req, res, next) {
   try {
     const users = await authService.getAllUsers();
@@ -89,18 +64,9 @@ async function getAllUsers(req, res, next) {
   }
 }
 
-/**
- * PATCH /users/:id/assign-tl
- *
- * Ruta protegida (admin): asigna un TL (instructor) a un usuario.
- * :id = usuario que recibe el TL. Body: { tlId } (id del instructor).
- *
- * Respuestas:
- * - 200: asignado -> { success: true, data: { user } }
- * - 400: falta tlId / ids invalidos, o el TL no es instructor
- * - 404: el usuario :id no existe
- * - 500: error inesperado -> manejador central de app.js
- */
+// PATCH /users/:id/assign-tl
+// Solo admin. Asigna un TL (instructor) a un usuario.
+// :id = usuario que recibe el TL. Body: { tlId }.
 async function assignTl(req, res, next) {
   try {
     const userId = Number(req.params.id);
@@ -142,26 +108,10 @@ async function assignTl(req, res, next) {
   }
 }
 
-/**
- * GET /users/me
- *
- * Ruta protegida (verifyToken): retorna el perfil completo del coder
- * (o cualquier usuario) autenticado, incluido availability_status.
- * A diferencia de GET /me (authController), que solo trae los datos
- * mínimos de sesión, este endpoint trae el perfil completo que
- * necesita el dashboard del coder (CA-01: pintar el badge de estado).
- *
- * Es de solo lectura (CA-03): no recibe body ni permite modificar
- * availability_status; ese cambio lo hace el TL/admin desde otro
- * endpoint. El coder solo ve el valor actualizado al recargar la
- * vista (CA-02), ya que cada llamada consulta la BD en tiempo real.
- *
- * Respuestas posibles:
- * - 200: -> { success: true, data: { user } } (user incluye availabilityStatus)
- * - 401: token no enviado / inválido / expirado (lo maneja verifyToken, antes de llegar acá)
- * - 404: el id del token ya no corresponde a ningún usuario (ej. fue borrado)
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// GET /users/me
+// Ruta protegida. Devuelve el perfil completo del usuario logueado, incluido
+// availability_status (que es lo que el dashboard del coder usa para el badge).
+// Es solo lectura: por aca no se cambia el estado, eso lo hace el TL/admin.
 async function getMyProfile(req, res, next) {
   try {
     const user = await authService.getMyProfile(req.user.id);
@@ -179,11 +129,8 @@ async function getMyProfile(req, res, next) {
   }
 }
 
-/**
- * PATCH /users/:id/status
- *
- * Cambia el estado de disponibilidad de un usuario.
- */
+// PATCH /users/:id/status
+// Cambia el estado de disponibilidad de un usuario.
 async function updateStatus(req, res, next) {
   try {
     const targetUserId = Number(req.params.id);
@@ -232,16 +179,21 @@ async function updateStatus(req, res, next) {
   }
 }
 
-/**
- * GET /users/:id/public
- *
- * Perfil público de un coder: visible para cualquier usuario
- * autenticado.
- */
+// GET /users/:id/public
+// Perfil público de un coder, visible para cualquier usuario logueado.
 async function getPublicProfile(req, res, next) {
   try {
     const userId = Number(req.params.id);
     const user = await authService.getMyProfile(userId);
+
+    // El perfil público es solo para coders (HU-13). Si el id es de otro rol
+    // (admin, instructor, recruiter) no hay perfil que mostrar -> 404.
+    if (!user || user.roleName !== "coder") {
+      return res.status(404).json({
+        success: false,
+        error: "Perfil no encontrado.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -268,22 +220,10 @@ async function getPublicProfile(req, res, next) {
   }
 }
 
-/**
- * PATCH /users/:id
- *
- * Ruta protegida (admin): actualiza los datos de un usuario existente
- * (usada por el modal "Editar miembro"). Reutiliza la validación de
- * negocio del service (rol válido, email/document únicos excluyendo al
- * propio usuario, company solo para recruiter). Nunca se permite cambiar
- * password, id, created_at ni datos de autenticación.
- *
- * Respuestas posibles:
- * - 200: usuario actualizado -> { success: true, data: { user } }
- * - 400: faltan campos obligatorios o el rol no existe
- * - 404: el usuario :id no existe
- * - 409: el email o el document ya están en uso por otro usuario
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// PATCH /users/:id
+// Solo admin. Edita los datos de un usuario (modal "Editar miembro").
+// Las validaciones de negocio (rol válido, email/documento únicos, company
+// solo para reclutador) las hace el service. No se toca password ni id.
 async function updateUserController(req, res, next) {
   try {
     const userId = Number(req.params.id);
@@ -326,20 +266,9 @@ async function updateUserController(req, res, next) {
   }
 }
 
-/**
- * DELETE /users/:id
- *
- * Ruta protegida (solo admin): elimina un usuario (usada por el modal de
- * confirmación "Delete Member"). El service valida que el usuario exista
- * y que el admin no intente eliminarse a sí mismo.
- *
- * Respuestas posibles:
- * - 200: eliminado -> { success: true, message: "User deleted successfully" }
- * - 400: id inválido
- * - 403: el admin intenta eliminarse a sí mismo
- * - 404: el usuario :id no existe
- * - 500: error inesperado -> delega al manejador de errores centralizado
- */
+// DELETE /users/:id
+// Solo admin. Elimina un usuario (modal "Delete Member"). El service valida
+// que el usuario exista y que el admin no se borre a sí mismo.
 async function deleteUserController(req, res, next) {
   try {
     const userId = Number(req.params.id);

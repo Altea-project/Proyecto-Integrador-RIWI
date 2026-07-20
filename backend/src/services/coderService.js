@@ -1,23 +1,19 @@
 
-// Capa de lógica de negocio. Aquí no hay transacción (es solo lectura),
-// pero sí hay una regla que vale la pena aislar del controller: convertir
-// y validar el query param "skills" antes de tocar la base de datos.
+/* Lógica de negocio de coders. 
+No hay transacción (es solo lectura), pero sí una regla que saco del controller: validar y convertir el query param "skills" antes de tocar la BD.
+*/
 
 const coderRepository = require('../repositories/coderRepository');
 
-// Error de dominio propio, igual que en interestService, para que el
-// controller no tenga que interpretar mensajes de texto.
+// Errores de dominio propios, igual que en interestService, para que el
+// controller no tenga que leer mensajes de texto.
 class InvalidSkillsError extends Error {}
 
-// HU-13 · T1 — error de dominio para cuando el :id no corresponde
-// a ningún coder existente.
+// HU-13 - error para cuando el :id no es de ningún coder.
 class CoderNotFoundError extends Error {}
 
-// ------------------------------------------------------------
-// HU-08 · T1 — Recibe el string "1,2,3" que llega por query,
-// lo valida y lo convierte a un array de enteros antes de
-// pasarlo al repository.
-// ------------------------------------------------------------
+// HU-08 - Recibe el string "1,2,3" que llega por query, lo valida y lo pasa a un array de enteros antes de mandarlo al repository.
+
 async function searchCoders(skillsParam) {
     if (!skillsParam) {
     throw new InvalidSkillsError('Debes indicar al menos una habilidad');
@@ -35,12 +31,9 @@ async function searchCoders(skillsParam) {
     return coderRepository.searchBySkills(skillIds);
 }
 
-// ------------------------------------------------------------
-// HU-13 · T1 — Arma el perfil público del coder combinando las
-// 3 consultas del repository en un solo objeto de respuesta.
-// No hay transacción porque son 3 lecturas independientes; si
-// una fallara no hay nada que "revertir" en las otras dos.
-// ------------------------------------------------------------
+/* HU-13 - Arma el perfil público del coder juntando las 3 consultas del repository en un solo objeto. 
+No uso transacción porque son 3 lecturas independientes: si una falla, no hay nada que revertir en las otras.
+*/
 async function getCoderProfile(coderId) {
     const id = parseInt(coderId, 10);
     if (Number.isNaN(id)) {
@@ -60,10 +53,9 @@ async function getCoderProfile(coderId) {
     return { ...coder, skills, projects };
 }
 
-// ------------------------------------------------------------
-// TL Dashboard — Coders a cargo del TL autenticado. El tlId viene del
-// token (req.user.id), nunca de la URL (CA-01).
-// ------------------------------------------------------------
+/*Dashboard del TL - Coders a cargo del TL logueado. El tlId viene del token, nunca de la URL. 
+Mapea las filas a camelCase para el frontend.*/
+
 async function getMyCoders(tlId) {
     const rows = await coderRepository.findCodersByTl(tlId);
     return rows.map((row) => ({

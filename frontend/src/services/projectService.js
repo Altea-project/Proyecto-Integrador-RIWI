@@ -28,4 +28,8 @@ export const projectService = {
     const response = await apiClient.get(`/projects/user/${userId}`);
     return response.data.projects;
   },
+  async getProject(id) {
+    const response = await apiClient.get(`/projects/${id}`);
+    return response.data.project;
+  },
 };
