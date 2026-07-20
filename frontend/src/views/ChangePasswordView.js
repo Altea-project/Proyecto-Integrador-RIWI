@@ -2,6 +2,7 @@ import { navigate } from "../router/router.js";
 import { userService } from "../services/userService.js";
 import { setUser, getUser } from "../state/store.js";
 import { PASSWORD_MIN_LENGTH } from "../utils/constants.js";
+import horizontalLogoNegative from "../../assets/logos/horizontalLogoNegative.svg";
 
 function lockIcon() {
   return `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -41,7 +42,7 @@ export function ChangePasswordView() {
         <div class="bg-bg-secondary border border-border-default rounded-2xl p-8 sm:p-10 shadow-2xl">
           <div class="text-center mb-8">
             <div class="flex justify-center mb-5">
-              <img src="/assets/logos/horizontalLogoNegative.svg" alt="Altea — logotipo horizontal" class="w-32 h-auto" />
+              <img src="${horizontalLogoNegative}" alt="Altea — logotipo horizontal" class="w-32 h-auto" />
             </div>
             <h1 class="font-heading text-xl font-semibold text-text-primary mt-2">
               Cambiá tu contraseña

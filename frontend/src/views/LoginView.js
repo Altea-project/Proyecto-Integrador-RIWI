@@ -3,6 +3,7 @@ import { validateForm } from "../utils/validators.js";
 import { authService } from "../services/authService.js";
 import { storage } from "../utils/storage.js";
 import { setUser } from "../state/store.js";
+import horizontalLogoNegative from "../../assets/logos/horizontalLogoNegative.svg";
 
 function emailIcon() {
   return `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -57,7 +58,7 @@ export function LoginView() {
         <div class="bg-bg-secondary border border-border-default rounded-2xl p-8 sm:p-10 shadow-2xl">
           <div class="text-center mb-8">
             <div class="flex justify-center mb-5">
-              <img src="/assets/logos/horizontalLogoNegative.svg" alt="Altea — logotipo horizontal" class="w-32 h-auto" />
+              <img src="${horizontalLogoNegative}" alt="Altea — logotipo horizontal" class="w-32 h-auto" />
             </div>
             <p class="font-body text-text-secondary text-[15px] sm:text-base mt-2 leading-relaxed">
               Muestra tu trabajo. Conecta con nuevas oportunidades.
