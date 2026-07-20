@@ -4,13 +4,13 @@ import { Button } from "../components/Button.js";
 
 // icon imports
 import iconBolt from "../../assets/icon/iconBolt.svg";
-import iconNet from "../../assets/icon/iconNet.svg";
+import iconNet from "../../assets/icon/IconNet.svg";
 import iconUpload from "../../assets/icon/iconUpload.svg";
 import iconCommunity from "../../assets/icon/iconCommunity.svg";
 import iconEmploy from "../../assets/icon/iconEmploy.svg";
 import rightArrow from "../../assets/icon/rightArrow.svg";
 import Gmail from "../../assets/icon/Gmail.svg";
-import LinkedIn from "../../assets/icon/LinkedIn.svg";
+import LinkedIn from "../../assets/icon/LinkedIN.svg";
 
 // logo imports
 import horizontalLogoNegative from "../../assets/logos/horizontalLogoNegative.svg";
