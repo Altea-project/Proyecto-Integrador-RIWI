@@ -28,6 +28,12 @@ app.use(cors({
     origin(origin, callback) {
         if (!origin) return callback(null, true); // Postman/curl -> permitido
         if (isLocalhost(origin)) return callback(null, true);
+        // Cualquier despliegue de Vercel (*.vercel.app): la URL de producción,
+        // las previews de rama (git-main, git-develop) y las de cada deploy.
+        // Evita tener que fijar una sola URL exacta en FRONTEND_URL.
+        if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)) {
+            return callback(null, true);
+        }
         if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
             return callback(null, true);
         }
